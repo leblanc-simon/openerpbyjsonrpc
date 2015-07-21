@@ -1,0 +1,8 @@
+{
+    "url": "http://localhost",
+    "port": 8069,
+    "database": "unit_test",
+    "username": "admin",
+    "password": "admin",
+    "master_password": "my-master-odoo-password"
+}
