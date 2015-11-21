@@ -2,6 +2,7 @@
     "name": "leblanc-simon/openerpbyjsonrpc",
     "description": "Library to communicate into PHP and OpenERP (Odoo)",
     "license": "MIT",
+    "keywords": ["odoo", "openerp", "jsonrpc"],
 
     "type": "library",
 

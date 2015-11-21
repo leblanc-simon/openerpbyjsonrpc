@@ -8,10 +8,11 @@
  * file that was distributed with this source code.
  */
 
-namespace OpenErpByJsonRpc\Exception;
+namespace OpenErpByJsonRpc\Client;
 
-use OpenErpByJsonRpc\Exception;
+use OpenErpByJsonRpc\JsonRpc\OpenERP;
 
-class ClientException extends Exception
+interface ClientInterface
 {
+    public function __construct(OpenERP $json_rpc);
 }

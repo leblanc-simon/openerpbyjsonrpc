@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the OpenErpByJsonRpc package.
+ *
+ * (c) Simon Leblanc <contact@leblanc-simon.eu>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace OpenErpByJsonRpc\JsonRpc;
 
@@ -11,7 +19,7 @@ class OpenERP
     const BASE_PATH = '/web/';
 
     /**
-     * @var IJsonRpc
+     * @var JsonRpcInterface
      */
     private $json_rpc;
 
@@ -61,10 +69,10 @@ class OpenERP
     private $long_call = false;
 
     /**
-     * @param IJsonRpc         $json_rpc
+     * @param JsonRpcInterface $json_rpc
      * @param StorageInterface $storage
      */
-    public function __construct(IJsonRpc $json_rpc, StorageInterface $storage)
+    public function __construct(JsonRpcInterface $json_rpc, StorageInterface $storage)
     {
         $this->json_rpc = $json_rpc;
         $this->storage = $storage;
