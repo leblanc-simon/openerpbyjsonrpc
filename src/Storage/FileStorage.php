@@ -54,7 +54,7 @@ class FileStorage implements StorageInterface
             return null;
         }
 
-        $content = @file_get_contents($filename);
+        $content = file_get_contents($filename);
         if (false === $content) {
             return null;
         }
