@@ -75,7 +75,7 @@ class Model
 
     public function remove($model, $id)
     {
-        return $this->openerp_jsonrpc->callBase($model, 'unlink', [$id]);
+        return $this->openerp_jsonrpc->callBase($model, 'unlink', [[$id]]);
     }
 
     private function getPath($method)
