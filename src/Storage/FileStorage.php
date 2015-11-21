@@ -50,7 +50,7 @@ class FileStorage implements StorageInterface
     public function read($key)
     {
         $filename = $this->directory.'/'.$this->prefix.$key;
-        if (false === is_file($filename)) {
+        if (false === is_file($filename) || false === is_readable($filename)) {
             return null;
         }
 
