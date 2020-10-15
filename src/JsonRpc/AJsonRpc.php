@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This file is part of the OpenErpByJsonRpc package.
  *
@@ -10,7 +12,9 @@
 
 namespace OpenErpByJsonRpc\JsonRpc;
 
-abstract class AJsonRpc
+use Laminas\Json\Server\Client;
+
+abstract class AJsonRpc implements JsonRpcInterface
 {
     /**
      * @var string
@@ -38,7 +42,7 @@ abstract class AJsonRpc
     protected $session_id;
 
     /**
-     * @var mixed
+     * @var mixed|Client
      */
     protected $client;
 
@@ -57,7 +61,7 @@ abstract class AJsonRpc
      * @param string $username
      * @param string $password
      */
-    public function __construct($uri = null, $username = null, $password = null)
+    public function __construct(? string $uri = null, ? string $username = null, ? string $password = null)
     {
         if (null !== $uri) {
             $this->setUri($uri);
@@ -73,10 +77,9 @@ abstract class AJsonRpc
     }
 
     /**
-     * @param string $uri
      * @return $this
      */
-    public function setUri($uri)
+    public function setUri(string $uri): JsonRpcInterface
     {
         $this->uri = $uri;
 
@@ -84,10 +87,9 @@ abstract class AJsonRpc
     }
 
     /**
-     * @param string $username
      * @return $this
      */
-    public function setUsername($username)
+    public function setUsername(string $username): JsonRpcInterface
     {
         $this->username = $username;
 
@@ -95,10 +97,9 @@ abstract class AJsonRpc
     }
 
     /**
-     * @param string $password
      * @return $this
      */
-    public function setPassword($password)
+    public function setPassword(string $password): JsonRpcInterface
     {
         $this->password = $password;
 
@@ -108,24 +109,20 @@ abstract class AJsonRpc
     /**
      * @return string
      */
-    public function getSessionId()
+    public function getSessionId(): ? string
     {
         return $this->session_id;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getCookie()
+    public function getCookie(): ? array
     {
         return $this->cookie;
     }
 
     /**
-     * @param int $timeout
      * @return $this
      */
-    public function setTimeout($timeout = 10)
+    public function setTimeout(int $timeout = 10): JsonRpcInterface
     {
         $this->timeout = $timeout;
 
@@ -133,8 +130,7 @@ abstract class AJsonRpc
     }
 
     /**
-     * @param $url
      * @return mixed
      */
-    abstract protected function getClient($url);
+    abstract protected function getClient(string $url);
 }

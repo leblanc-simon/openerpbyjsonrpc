@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This file is part of the OpenErpByJsonRpc package.
  *
@@ -10,39 +12,35 @@
 
 namespace OpenErpByJsonRpc\Client;
 
-class Session
-    extends AClient
-    implements ClientInterface
+class Session extends AClient implements ClientInterface
 {
     /**
      * @var string the base of URL for all session action
      */
-    private $path = 'session/:method';
+    private const PATH = 'session/:method';
 
     /**
-     * Return the session information
+     * Return the session information.
      *
-     * @return array
      * @throws \OpenErpByJsonRpc\Exception\JsonException
      */
-    public function getInfos()
+    public function getInfos(): array
     {
         if (true === $this->openerp_jsonrpc->isLogged()) {
-            return $this->openerp_jsonrpc->call($this->getPath('get_session_info'));
-        } else {
-            return $this->openerp_jsonrpc->callWithoutCredential($this->getPath('get_session_info'));
+            return $this->openerp_jsonrpc->call(self::getPath('get_session_info'));
         }
+
+        return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('get_session_info'));
     }
 
     /**
-     * Change current password
+     * Change current password.
      *
-     * @return array
      * @throws \OpenErpByJsonRpc\Exception\JsonException
      */
-    public function changePassword($old_password, $new_password)
+    public function changePassword(string $old_password, string $new_password): array
     {
-        return $this->openerp_jsonrpc->call($this->getPath('change_password'), [
+        return $this->openerp_jsonrpc->call(self::getPath('change_password'), [
             'fields' => [
                 ['name' => 'old_pwd', 'value' => $old_password],
                 ['name' => 'new_password', 'value' => $new_password],
@@ -52,35 +50,30 @@ class Session
     }
 
     /**
-     * Return the list of available language
+     * Return the list of available language.
      *
-     * @return array
      * @throws \OpenErpByJsonRpc\Exception\JsonException
      */
-    public function getLangList()
+    public function getLangList(): array
     {
-        return $this->openerp_jsonrpc->callWithoutCredential($this->getPath('get_lang_list'));
+        return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('get_lang_list'));
     }
 
     /**
-     * Return the list of available modules
+     * Return the list of available modules.
      *
-     * @return array
      * @throws \OpenErpByJsonRpc\Exception\JsonException
      */
-    public function getModules()
+    public function getModules(): array
     {
-        return $this->openerp_jsonrpc->call($this->getPath('modules'));
+        return $this->openerp_jsonrpc->call(self::getPath('modules'));
     }
 
     /**
-     * Return the path for a method
-     *
-     * @param string $method
-     * @return string
+     * Return the path for a method.
      */
-    private function getPath($method)
+    private static function getPath(string $method): string
     {
-        return str_replace(':method', $method, $this->path);
+        return \str_replace(':method', $method, self::PATH);
     }
 }

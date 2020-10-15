@@ -1,6 +1,12 @@
 <?php
 
-class DatabaseTest extends PHPUnit_Framework_TestCase
+use OpenErpByJsonRpc\Client\Database;
+use OpenErpByJsonRpc\JsonRpc\OpenERP;
+use OpenErpByJsonRpc\JsonRpc\ZendJsonRpc;
+use OpenErpByJsonRpc\Storage\NullStorage;
+use PHPUnit\Framework\TestCase;
+
+class DatabaseTest extends TestCase
 {
     /**
      * @var array
@@ -8,7 +14,7 @@ class DatabaseTest extends PHPUnit_Framework_TestCase
     static private $config;
 
     /**
-     * @var \OpenErpByJsonRpc\Client\Database
+     * @var Database
      */
     private $database;
 
@@ -17,28 +23,31 @@ class DatabaseTest extends PHPUnit_Framework_TestCase
      *
      * @since Method available since Release 3.4.0
      */
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
-        self::$config = json_decode(
-            file_get_contents(dirname(__DIR__).'/config.test.json'),
-            true
-        );
+        $content = \file_get_contents(\dirname(__DIR__).'/config.test.json');
+        if (false === $content) {
+            self::fail('Impossible to read '.\dirname(__DIR__).'/config.test.json');
+            return;
+        }
+
+        self::$config = \json_decode($content, true);
     }
 
     /**
      * Sets up the fixture, for example, open a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
-        $json_rpc = new \OpenErpByJsonRpc\JsonRpc\ZendJsonRpc(self::$config['url']);
-        $openerp = new \OpenErpByJsonRpc\JsonRpc\OpenERP($json_rpc, new \OpenErpByJsonRpc\Storage\NullStorage([]));
+        $json_rpc = new ZendJsonRpc(self::$config['url']);
+        $openerp = new OpenERP($json_rpc, new NullStorage([]));
         $openerp
             ->setBaseUri(self::$config['url'])
             ->setPort(self::$config['port'])
         ;
 
-        $this->database = new \OpenErpByJsonRpc\Client\Database($openerp);
+        $this->database = new Database($openerp);
     }
 
     /**
@@ -46,35 +55,36 @@ class DatabaseTest extends PHPUnit_Framework_TestCase
      *
      * @since Method available since Release 3.4.0
      */
-    public static function tearDownAfterClass()
+    public static function tearDownAfterClass(): void
     {
-        $json_rpc = new \OpenErpByJsonRpc\JsonRpc\ZendJsonRpc(self::$config['url']);
-        $openerp = new \OpenErpByJsonRpc\JsonRpc\OpenERP($json_rpc, new \OpenErpByJsonRpc\Storage\NullStorage([]));
+        $json_rpc = new ZendJsonRpc(self::$config['url']);
+        $openerp = new OpenERP($json_rpc, new NullStorage([]));
         $openerp
             ->setBaseUri(self::$config['url'])
             ->setPort(self::$config['port'])
         ;
 
-        $database = new \OpenErpByJsonRpc\Client\Database($openerp);
+        $database = new Database($openerp);
 
         $database->drop(self::$config['master_password'], self::$config['database'].'_create');
         $database->drop(self::$config['master_password'], self::$config['database'].'_duplicate');
     }
 
-    public function testListDatabase()
+    public function testListDatabase(): void
     {
         $list = $this->database->getList();
-        $this->assertInternalType('array', $list);
-        $this->assertCount(1, $list);
-        $this->assertEquals([self::$config['database']], $list);
+        self::assertIsArray($list);
+        self::assertCount(1, $list);
+        self::assertEquals([self::$config['database']], $list);
     }
 
     /**
      * @large
+
      */
-    public function testCreateDatabaseSuccess()
+    public function testCreateDatabaseSuccess(): void
     {
-        $this->assertTrue($this->database->create(
+        self::assertTrue($this->database->create(
             self::$config['master_password'],
             self::$config['database'].'_create',
             false,
@@ -82,7 +92,7 @@ class DatabaseTest extends PHPUnit_Framework_TestCase
             'admin'
         ));
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 self::$config['database'],
                 self::$config['database'].'_create',
@@ -91,12 +101,11 @@ class DatabaseTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    /**
-     * @expectedException \Zend\Json\Server\Exception\ErrorException
-     * @expectedExceptionMessage Odoo Server Error
-     */
-    public function testCreateDatabaseFailBecauseBadMasterPassword()
+    public function testCreateDatabaseFailBecauseBadMasterPassword(): void
     {
+        $this->expectExceptionMessage("Odoo Server Error");
+        $this->expectException(\Laminas\Json\Server\Exception\ErrorException::class);
+
         $this->database->create(
             self::$config['master_password'].'----bad',
             self::$config['database'].'_create_bad_master',
@@ -108,16 +117,17 @@ class DatabaseTest extends PHPUnit_Framework_TestCase
 
     /**
      * @large
+
      */
-    public function testDuplicateDatabaseSuccess()
+    public function testDuplicateDatabaseSuccess(): void
     {
-        $this->assertTrue($this->database->duplicate(
+        self::assertTrue($this->database->duplicate(
             self::$config['master_password'],
             self::$config['database'],
             self::$config['database'].'_duplicate'
         ));
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 self::$config['database'],
                 self::$config['database'].'_create',
@@ -129,15 +139,16 @@ class DatabaseTest extends PHPUnit_Framework_TestCase
 
     /**
      * @large
+
      */
-    public function testDropDatabaseSuccess()
+    public function testDropDatabaseSuccess(): void
     {
-        $this->assertTrue($this->database->drop(
+        self::assertTrue($this->database->drop(
             self::$config['master_password'],
             self::$config['database'].'_duplicate'
         ));
 
-        $this->assertEquals(
+        self::assertEquals(
             [
                 self::$config['database'],
                 self::$config['database'].'_create',

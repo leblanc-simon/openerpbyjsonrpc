@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This file is part of the OpenErpByJsonRpc package.
  *
@@ -13,30 +15,30 @@ namespace OpenErpByJsonRpc\Storage;
 class NullStorage implements StorageInterface
 {
     /**
-     * @param array $options
+     * @phpstan-ignore-next-line
      */
     public function __construct(array $options = [])
     {
     }
 
     /**
-     * Read a key in the storage
-     * @param string $key
+     * Read a key in the storage.
+     *
      * @return mixed
      */
-    public function read($key)
+    public function read(string $key)
     {
         return null;
     }
 
     /**
-     * Write data into storage
+     * Write data into storage.
      *
-     * @param string $key
-     * @param mixed  $data
+     * @param mixed $data
+     *
      * @return $this
      */
-    public function write($key, $data)
+    public function write(string $key, $data): StorageInterface
     {
         return $this;
     }

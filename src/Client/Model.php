@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This file is part of the OpenErpByJsonRpc package.
  *
@@ -14,23 +16,34 @@ use OpenErpByJsonRpc\Criteria;
 use OpenErpByJsonRpc\Exception\ClientException;
 use OpenErpByJsonRpc\Exception\NotSingleException;
 
-class Model
-    extends AClient
-    implements ClientInterface
+class Model extends AClient implements ClientInterface
 {
-    private $path = 'dataset/:method';
+    private const PATH = 'dataset/:method';
 
-    public function search($model, $criteria = [], array $fields = [], $offset = 0, $limit = null, $sort = '')
-    {
+    /**
+     * @param array|Criteria $criteria
+     *
+     * @throws ClientException
+     * @throws \OpenErpByJsonRpc\Exception\JsonException
+     */
+    public function search(
+        string $model,
+        $criteria = [],
+        array $fields = [],
+        int $offset = 0,
+        ? int $limit = null,
+        string $sort = ''
+    ): array {
         if ($criteria instanceof Criteria) {
             $criteria = $criteria->get();
         }
 
-        if (false === is_array($criteria)) {
+        // @phpstan-ignore-next-line
+        if (false === \is_array($criteria)) {
             throw new ClientException('criteria must be an array or Criteria instance');
         }
 
-        $result = $this->openerp_jsonrpc->call($this->getPath('search_read'), [
+        $result = $this->openerp_jsonrpc->call(self::getPath('search_read'), [
             'model' => $model,
             'fields' => $fields,
             'domain' => $criteria,
@@ -39,16 +52,22 @@ class Model
             'sort' => $sort,
         ]);
 
-        if (isset($result['records']) === true && is_array($result['records']) === true) {
+        if (true === isset($result['records']) && true === \is_array($result['records'])) {
             return $result['records'];
         }
 
         return [];
     }
 
-    public function read($model, $ids, array $fields = [])
+    /**
+     * @param int|int[] $ids
+     *
+     * @throws ClientException
+     * @throws \OpenErpByJsonRpc\Exception\JsonException
+     */
+    public function read(string $model, $ids, array $fields = []): array
     {
-        if (true === is_numeric($ids)) {
+        if (true === \is_numeric($ids)) {
             $ids = [$ids];
         }
 
@@ -58,36 +77,45 @@ class Model
         return $this->search($model, $criteria, $fields);
     }
 
-    public function readOne($model, $id, array $fields = [])
+    /**
+     * @param int|int[] $id
+     *
+     * @throws ClientException
+     * @throws NotSingleException
+     * @throws \OpenErpByJsonRpc\Exception\JsonException
+     */
+    public function readOne(string $model, $id, array $fields = []): ? array
     {
         $result = $this->read($model, $id, $fields);
 
-        if (count($result) === 0) {
+        if (0 === \count($result)) {
             return null;
-        } elseif (count($result) === 1) {
+        }
+
+        if (1 === \count($result)) {
             return $result[0];
         }
 
         throw new NotSingleException();
     }
 
-    public function create($model, array $datas)
+    public function create(string $model, array $datas): int
     {
         return $this->openerp_jsonrpc->callBase($model, 'create', [$datas]);
     }
 
-    public function write($model, $id, array $datas)
+    public function write(string $model, int $id, array $datas): bool
     {
         return $this->openerp_jsonrpc->callBase($model, 'write', [$id, $datas]);
     }
 
-    public function remove($model, $id)
+    public function remove(string $model, int $id): bool
     {
         return $this->openerp_jsonrpc->callBase($model, 'unlink', [[$id]]);
     }
 
-    private function getPath($method)
+    private static function getPath(string $method): string
     {
-        return str_replace(':method', $method, $this->path);
+        return \str_replace(':method', $method, self::PATH);
     }
 }

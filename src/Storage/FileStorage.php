@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This file is part of the OpenErpByJsonRpc package.
  *
@@ -26,73 +28,72 @@ class FileStorage implements StorageInterface
     private $prefix;
 
     /**
-     * @param array $options
      * @throws OptionException
      */
     public function __construct(array $options = [])
     {
-        if (isset($options['directory']) === false) {
+        if (false === isset($options['directory'])) {
             throw new OptionException('directory must be defined');
         }
         $this->setDirectory($options['directory']);
 
-        if (isset($options['prefix']) === false) {
+        if (false === isset($options['prefix'])) {
             throw new OptionException('prefix must be defined');
         }
         $this->prefix = $options['prefix'];
     }
 
     /**
-     * Read a key in the storage
-     * @param string $key
+     * Read a key in the storage.
+     *
      * @return mixed
      */
-    public function read($key)
+    public function read(string $key)
     {
         $filename = $this->directory.'/'.$this->prefix.$key;
-        if (false === is_file($filename) || false === is_readable($filename)) {
+        if (false === \is_file($filename) || false === \is_readable($filename)) {
             return null;
         }
 
-        $content = file_get_contents($filename);
+        $content = \file_get_contents($filename);
         if (false === $content) {
             return null;
         }
 
-        return json_decode($content, true);
+        return \json_decode($content, true);
     }
 
     /**
-     * Write data into storage
+     * Write data into storage.
      *
-     * @param string $key
-     * @param mixed  $data
+     * @param mixed $data
+     *
      * @return $this
+     *
      * @throws WriteException
      */
-    public function write($key, $data)
+    public function write(string $key, $data): StorageInterface
     {
-        $content = json_encode($data);
-        if (false === @file_put_contents($this->directory.'/'.$this->prefix.$key, $content)) {
-            throw new WriteException(sprintf('Impossible to write %s', $key));
+        $content = \json_encode($data);
+        if (false === @\file_put_contents($this->directory.'/'.$this->prefix.$key, $content)) {
+            throw new WriteException(\sprintf('Impossible to write %s', $key));
         }
 
         return $this;
     }
 
     /**
-     * @param string $directory
      * @throws Exception\OptionException
      */
-    private function setDirectory($directory)
+    private function setDirectory(string $directory): void
     {
-        $real_directory = realpath($directory);
-        if (is_dir($real_directory) === false) {
-            throw new OptionException(sprintf('%s must exists', $directory));
+        $real_directory = \realpath($directory);
+        if (false === $real_directory || false === \is_dir($real_directory)) {
+            throw new OptionException(\sprintf('%s must exists', $directory));
         }
 
-        if (is_readable($real_directory) === false || is_writable($real_directory) === false) {
-            throw new OptionException(sprintf('%s must be readable and writable', $directory));
+        if (false === \is_readable($real_directory) || false === \is_writable($real_directory)) {
+            throw new OptionException(\sprintf('%s must be readable and writable', $directory));
         }
 
         $this->directory = $real_directory;

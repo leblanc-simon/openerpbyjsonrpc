@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This file is part of the OpenErpByJsonRpc package.
  *
@@ -10,30 +12,30 @@
 
 namespace OpenErpByJsonRpc\JsonRpc;
 
-use Zend\Http\Client as HttpClient;
-use Zend\Http\Header\SetCookie;
-use Zend\Json\Server\Client;
+use Laminas\Http\Client as HttpClient;
+use Laminas\Http\Header\SetCookie;
+use Laminas\Json\Server\Client;
 
-class ZendJsonRpc
-    extends AJsonRpc
-    implements JsonRpcInterface
+class ZendJsonRpc extends AJsonRpc implements JsonRpcInterface
 {
     /**
-     * @param            $url
-     * @param            $method
-     * @param array      $params
-     * @param null       $session_id
-     * @param bool|false $long_call
      * @return mixed
      */
-    public function call($url, $method, $params = [], $session_id = null, $long_call = false)
-    {
+    public function call(
+        string $url,
+        string $method,
+        array $params = [],
+        ? string $session_id = null,
+        bool $long_call = false
+    ) {
         if (true === $long_call) {
             $this->setTimeout(30 * 60 * 60); // 30 minutes
         }
 
         $this->getClient($url);
         $return_value = $this->client->call($method, $params);
+
+        /* @var SetCookie[] cookie */
         $this->cookie = $this->client->getHttpClient()->getResponse()->getCookie();
 
         // Restore timeout
@@ -42,7 +44,7 @@ class ZendJsonRpc
         return $return_value;
     }
 
-    protected function getClient($url)
+    protected function getClient(string $url)
     {
         $http_client = new HttpClient(null, ['timeout' => $this->timeout]);
         $http_client->setHeaders(['User-Agent' => 'OpenErpByJsonRpc by ZendJsonRpc']);
@@ -56,24 +58,43 @@ class ZendJsonRpc
         return $this->client;
     }
 
-    public function setCookie($name, $value = null, $expire = null, $path = null, $domain = null, $secure = false,
-                              $httponly = true, $max_age = null, $version = null)
-    {
+    /**
+     * @param int|string|\DateTime|null $expire
+     */
+    public function setCookie(
+        ? string $name,
+        ? string $value = null,
+        $expire = null,
+        ? string $path = null,
+        ? string $domain = null,
+        bool $secure = false,
+        bool $httponly = true,
+        ? int $max_age = null,
+        ? int $version = null
+    ): JsonRpcInterface {
         $this->cookie = new SetCookie($name, $value, $expire, $path, $domain, $secure, $httponly, $max_age, $version);
 
         return $this;
     }
 
-    /**
-     * @return null|array
-     */
-    public function getCookie()
+    public function getCookie(): ?array
     {
-        if (is_array($this->cookie) || $this->cookie instanceof \ArrayIterator) {
-            $cookie = reset($this->cookie);
-        } elseif ($this->cookie instanceof SetCookie) {
+        if (false === ($this->cookie instanceof \ArrayIterator) && false === ($this->cookie instanceof SetCookie)) {
+            return null;
+        }
+
+        $cookie = null;
+
+        if ($this->cookie instanceof \ArrayIterator) {
+            $this->cookie->seek(0);
+            $cookie = $this->cookie->current();
+        }
+
+        if ($this->cookie instanceof SetCookie) {
             $cookie = $this->cookie;
-        } else {
+        }
+
+        if (null === $cookie) {
             return null;
         }
 

@@ -1,3 +1,4 @@
 /vendor
-/test/config.test.json
-/test/coverage
+/tests/config.test.json
+/tests/html-coverage
+.phpunit.cache

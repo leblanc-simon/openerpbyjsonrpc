@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This file is part of the OpenErpByJsonRpc package.
  *
@@ -14,23 +16,26 @@ interface StorageInterface
 {
     /**
      * @param array $options Option to initialize the storage
+     *
      * @throws Exception\OptionException
      */
     public function __construct(array $options = []);
 
     /**
-     * Read a key in the storage
-     * @param string $key
+     * Read a key in the storage.
+     *
      * @return mixed
      */
-    public function read($key);
+    public function read(string $key);
 
     /**
-     * Write data into storage
-     * @param string $key
+     * Write data into storage.
+     *
      * @param mixed $data
+     *
      * @return $this
+     *
      * @throws Exception\WriteException
      */
-    public function write($key, $data);
+    public function write(string $key, $data): self;
 }
