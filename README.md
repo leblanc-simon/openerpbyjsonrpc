@@ -3,7 +3,7 @@ OpenErpByJsonRpc
 
 Communicate with Odoo via JSON-RPC
 
-[![SensioLabsInsight](https://insight.sensiolabs.com/projects/8e2d665f-a756-4bb7-ad81-1850b0d5a1d0/mini.png)](https://insight.sensiolabs.com/projects/8e2d665f-a756-4bb7-ad81-1850b0d5a1d0)
+[![SymfonyInsight](https://insight.symfony.com/projects/23e05d1d-f42c-440c-9e88-3176491a5c93/small.svg)](https://insight.symfony.com/projects/23e05d1d-f42c-440c-9e88-3176491a5c93)
 
 Installation
 ------------
