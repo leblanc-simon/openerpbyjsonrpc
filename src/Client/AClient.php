@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This file is part of the OpenErpByJsonRpc package.
  *
@@ -14,6 +16,9 @@ use OpenErpByJsonRpc\JsonRpc\OpenERP;
 
 abstract class AClient
 {
+    /**
+     * @var OpenERP
+     */
     protected $openerp_jsonrpc;
 
     public function __construct(OpenERP $openerp_jsonrpc)

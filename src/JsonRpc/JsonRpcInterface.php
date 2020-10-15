@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This file is part of the OpenErpByJsonRpc package.
  *
@@ -12,20 +14,41 @@ namespace OpenErpByJsonRpc\JsonRpc;
 
 interface JsonRpcInterface
 {
-    public function __construct($uri = null, $username = null, $password = null);
+    public function __construct(? string $uri = null, ? string $username = null, ? string $password = null);
 
-    public function setUri($uri);
+    public function setUri(string $uri): self;
 
-    public function setUsername($username);
+    public function setUsername(string $username): self;
 
-    public function setPassword($password);
+    public function setPassword(string $password): self;
 
-    public function getSessionId();
+    public function getSessionId(): ?string;
 
-    public function getCookie();
+    public function getCookie(): ? array;
 
-    public function setCookie($name, $value = null, $expire = null, $path = null, $domain = null, $secure = false,
-                              $httponly = true, $max_age = null, $version = null);
+    /**
+     * @param int|string|\DateTime|null $expire
+     */
+    public function setCookie(
+        ? string $name,
+        ? string $value = null,
+        $expire = null,
+        ? string $path = null,
+        ? string $domain = null,
+        bool $secure = false,
+        bool $httponly = true,
+        ? int $max_age = null,
+        ? int $version = null
+    ): self;
 
-    public function call($url, $method, $params = [], $session_id = null, $long_call = false);
+    /**
+     * @return mixed
+     */
+    public function call(
+        string $url,
+        string $method,
+        array $params = [],
+        ? string $session_id = null,
+        bool $long_call = false
+    );
 }

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This file is part of the OpenErpByJsonRpc package.
  *
@@ -10,40 +12,35 @@
 
 namespace OpenErpByJsonRpc\Client;
 
-class Database
-    extends AClient
-    implements ClientInterface
+class Database extends AClient implements ClientInterface
 {
     /**
      * @var string the base of URL for all database action
      */
-    private $path = 'database/:method';
+    private const PATH = 'database/:method';
 
     /**
-     * Return the available database name
-     *
-     * @return array
+     * Return the available database name.
      */
-    public function getList()
+    public function getList(): array
     {
-        return $this->openerp_jsonrpc->callWithoutCredential($this->getPath('get_list'));
+        return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('get_list'));
     }
 
     /**
-     * Create a new database
+     * Create a new database.
      *
      * @param string $password       admin password (master password in the config file)
      * @param string $name           the name of the new database
      * @param bool   $demo           populate with demo data or not
      * @param string $language       language to use
      * @param string $admin_password admin password to initialize
-     * @return bool
      */
-    public function create($password, $name, $demo, $language, $admin_password)
+    public function create(string $password, string $name, bool $demo, string $language, string $admin_password): bool
     {
         $this->openerp_jsonrpc->prepareLongCall();
 
-        return $this->openerp_jsonrpc->callWithoutCredential($this->getPath('create'), [
+        return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('create'), [
             'fields' => [
                 ['name' => 'super_admin_pwd', 'value' => $password],
                 ['name' => 'db_name', 'value' => $name],
@@ -55,18 +52,17 @@ class Database
     }
 
     /**
-     * Duplicate a database
+     * Duplicate a database.
      *
      * @param string $password    admin password (master password in the config file)
      * @param string $source_name the source database
      * @param string $name        the destination database
-     * @return bool
      */
-    public function duplicate($password, $source_name, $name)
+    public function duplicate(string $password, string $source_name, string $name): bool
     {
         $this->openerp_jsonrpc->prepareLongCall();
 
-        return $this->openerp_jsonrpc->callWithoutCredential($this->getPath('duplicate'), [
+        return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('duplicate'), [
             'fields' => [
                 ['name' => 'super_admin_pwd', 'value' => $password],
                 ['name' => 'db_original_name', 'value' => $source_name],
@@ -76,17 +72,16 @@ class Database
     }
 
     /**
-     * Drop a database
+     * Drop a database.
      *
      * @param string $password admin password (master password in the config file)
      * @param string $name     the database to drop
-     * @return bool
      */
-    public function drop($password, $name)
+    public function drop(string $password, string $name): bool
     {
         $this->openerp_jsonrpc->prepareLongCall();
 
-        return $this->openerp_jsonrpc->callWithoutCredential($this->getPath('drop'), [
+        return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('drop'), [
             'fields' => [
                 ['name' => 'drop_pwd', 'value' => $password],
                 ['name' => 'drop_db', 'value' => $name],
@@ -95,13 +90,10 @@ class Database
     }
 
     /**
-     * Return the path for a method
-     *
-     * @param string $method
-     * @return string
+     * Return the path for a method.
      */
-    private function getPath($method)
+    private static function getPath(string $method): string
     {
-        return str_replace(':method', $method, $this->path);
+        return \str_replace(':method', $method, self::PATH);
     }
 }

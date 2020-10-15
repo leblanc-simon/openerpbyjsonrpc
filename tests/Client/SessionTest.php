@@ -1,6 +1,12 @@
 <?php
 
-class SessionTest extends PHPUnit_Framework_TestCase
+use OpenErpByJsonRpc\Client\Session;
+use OpenErpByJsonRpc\JsonRpc\OpenERP;
+use OpenErpByJsonRpc\JsonRpc\ZendJsonRpc;
+use OpenErpByJsonRpc\Storage\NullStorage;
+use PHPUnit\Framework\TestCase;
+
+class SessionTest extends TestCase
 {
     /**
      * @var array
@@ -12,22 +18,25 @@ class SessionTest extends PHPUnit_Framework_TestCase
      *
      * @since Method available since Release 3.4.0
      */
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
-        self::$config = json_decode(
-            file_get_contents(dirname(__DIR__).'/config.test.json'),
-            true
-        );
+        $content = \file_get_contents(\dirname(__DIR__).'/config.test.json');
+        if (false === $content) {
+            self::fail('Impossible to read '.\dirname(__DIR__).'/config.test.json');
+            return;
+        }
+
+        self::$config = \json_decode($content, true);
     }
 
     /**
      * @param bool|false $login
-     * @return \OpenErpByJsonRpc\Client\Session
+     * @return Session
      */
-    private function getSession($login = false)
+    private function getSession($login = false): Session
     {
-        $json_rpc = new \OpenErpByJsonRpc\JsonRpc\ZendJsonRpc(self::$config['url']);
-        $openerp = new \OpenErpByJsonRpc\JsonRpc\OpenERP($json_rpc, new \OpenErpByJsonRpc\Storage\NullStorage([]));
+        $json_rpc = new ZendJsonRpc(self::$config['url']);
+        $openerp = new OpenERP($json_rpc, new NullStorage([]));
         $openerp
             ->setBaseUri(self::$config['url'])
             ->setPort(self::$config['port'])
@@ -42,46 +51,46 @@ class SessionTest extends PHPUnit_Framework_TestCase
             $openerp->reconnectOrLogin(null);
         }
 
-        return new \OpenErpByJsonRpc\Client\Session($openerp);
+        return new Session($openerp);
     }
 
-    public function testGetNotLoggedSessionInformation()
+    public function testGetNotLoggedSessionInformation(): void
     {
         $session = $this->getSession();
         $informations = $session->getInfos();
-        $this->assertInternalType('array', $informations);
-        $this->assertEquals(null, $informations['uid']);
+        self::assertIsArray($informations);
+        self::assertEquals(null, $informations['uid']);
     }
 
-    public function testGetLoggedSessionInformation()
+    public function testGetLoggedSessionInformation(): void
     {
         $session = $this->getSession(true);
         $informations = $session->getInfos();
-        $this->assertInternalType('array', $informations);
-        $this->assertEquals(1, $informations['uid']);
+        self::assertIsArray($informations);
+        self::assertEquals(1, $informations['uid']);
     }
 
-    public function testGetLanguages()
+    public function testGetLanguages(): void
     {
         $session = $this->getSession();
         $languages = $session->getLangList();
-        $this->assertInternalType('array', $languages);
-        $this->assertContains(['fr_FR', 'French / Français'], $languages);
+        self::assertIsArray($languages);
+        self::assertContains(['fr_FR', 'French / Français'], $languages);
     }
 
-    public function testGetModules()
+    public function testGetModules(): void
     {
         $session = $this->getSession(true);
         $modules = $session->getModules();
-        $this->assertInternalType('array', $modules);
-        $this->assertContains('web', $modules);
+        self::assertIsArray($modules);
+        self::assertContains('web', $modules);
     }
 
-    public function testChangePassword()
+    public function testChangePassword(): void
     {
         $session = $this->getSession(true);
         $response = $session->changePassword(self::$config['password'], 'new-password');
-        $this->assertEquals(['new_password' => 'new-password'], $response);
+        self::assertEquals(['new_password' => 'new-password'], $response);
 
         // Restore password
         $password = self::$config['password'];
@@ -90,5 +99,4 @@ class SessionTest extends PHPUnit_Framework_TestCase
         $session->changePassword(self::$config['password'], $password);
         self::$config['password'] = $password;
     }
-
 }

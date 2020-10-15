@@ -1,6 +1,12 @@
 <?php
 
-class ReconnectTest extends PHPUnit_Framework_TestCase
+use OpenErpByJsonRpc\Client\Session;
+use OpenErpByJsonRpc\JsonRpc\OpenERP;
+use OpenErpByJsonRpc\JsonRpc\ZendJsonRpc;
+use OpenErpByJsonRpc\Storage\FileStorage;
+use PHPUnit\Framework\TestCase;
+
+class ReconnectTest extends TestCase
 {
     /**
      * @var array
@@ -16,7 +22,7 @@ class ReconnectTest extends PHPUnit_Framework_TestCase
      * Sets up the fixture, for example, open a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->removeDirectory();
     }
@@ -25,7 +31,7 @@ class ReconnectTest extends PHPUnit_Framework_TestCase
      * Tears down the fixture, for example, close a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->removeDirectory();
     }
@@ -35,25 +41,28 @@ class ReconnectTest extends PHPUnit_Framework_TestCase
      *
      * @since Method available since Release 3.4.0
      */
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
-        self::$config = json_decode(
-            file_get_contents(dirname(__DIR__).'/config.test.json'),
-            true
-        );
+        $content = \file_get_contents(\dirname(__DIR__).'/config.test.json');
+        if (false === $content) {
+            self::fail('Impossible to read '.\dirname(__DIR__).'/config.test.json');
+            return;
+        }
+
+        self::$config = \json_decode($content, true);
     }
 
     /**
      * Remove the cache directory
      */
-    protected function removeDirectory()
+    protected function removeDirectory(): void
     {
         if (is_dir(self::$directory) === false) {
             return;
         }
 
         $files = glob(self::$directory.'/*');
-        foreach ($files as $file) {
+        foreach ($files as $file) { // @phpstan-ignore-line
             unlink($file);
         }
 
@@ -61,24 +70,24 @@ class ReconnectTest extends PHPUnit_Framework_TestCase
     }
 
     /**
-     * @return \OpenErpByJsonRpc\Storage\FileStorage
+     * @return FileStorage
      */
-    protected function getStorage()
+    protected function getStorage(): FileStorage
     {
         if (is_dir(self::$directory) === false) {
             mkdir(static::$directory, 0755);
         }
 
-        return new \OpenErpByJsonRpc\Storage\FileStorage([
+        return new FileStorage([
             'directory' => self::$directory,
             'prefix' => 'test_',
         ]);
     }
 
-    public function testReconnectWithoutLogin()
+    public function testReconnectWithoutLogin(): void
     {
-        $json_rpc = new \OpenErpByJsonRpc\JsonRpc\ZendJsonRpc(self::$config['url']);
-        $openerp = new \OpenErpByJsonRpc\JsonRpc\OpenERP($json_rpc, $this->getStorage());
+        $json_rpc = new ZendJsonRpc(self::$config['url']);
+        $openerp = new OpenERP($json_rpc, $this->getStorage());
         $openerp
             ->setBaseUri(self::$config['url'])
             ->setPort(self::$config['port'])
@@ -88,17 +97,17 @@ class ReconnectTest extends PHPUnit_Framework_TestCase
             ->reconnectOrLogin(null)
         ;
 
-        $session = new \OpenErpByJsonRpc\Client\Session($openerp);
+        $session = new Session($openerp);
         $infos = $session->getInfos();
         $session_id = $infos['session_id'];
 
-        $openerp = new \OpenErpByJsonRpc\JsonRpc\OpenERP($json_rpc, $this->getStorage());
+        $openerp = new OpenERP($json_rpc, $this->getStorage());
         $openerp
             ->setBaseUri(self::$config['url'])
             ->setPort(self::$config['port'])
             ->reconnectOrLogin($session_id)
         ;
 
-        $this->assertTrue($openerp->isLogged());
+        self::assertTrue($openerp->isLogged());
     }
 }

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * This file is part of the OpenErpByJsonRpc package.
  *
@@ -34,7 +36,7 @@ class OpenERP
     private $base_uri;
 
     /**
-     * @var int
+     * @var int|null
      */
     private $port;
 
@@ -54,12 +56,12 @@ class OpenERP
     private $password;
 
     /**
-     * @var string
+     * @var string|null
      */
     private $session_id;
 
     /**
-     * @var array
+     * @var array|null
      */
     private $context;
 
@@ -68,17 +70,18 @@ class OpenERP
      */
     private $long_call = false;
 
-    /**
-     * @param JsonRpcInterface $json_rpc
-     * @param StorageInterface $storage
-     */
     public function __construct(JsonRpcInterface $json_rpc, StorageInterface $storage)
     {
         $this->json_rpc = $json_rpc;
         $this->storage = $storage;
     }
 
-    public function call($path, $params = [])
+    /**
+     * @return mixed
+     *
+     * @throws JsonException
+     */
+    public function call(string $path, array $params = [])
     {
         if (null === $this->session_id) {
             if (false === $this->login()) {
@@ -86,7 +89,7 @@ class OpenERP
             }
         }
 
-        $params = array_merge(['context' => $this->context], $params);
+        $params = \array_merge(['context' => $this->context], $params);
 
         $result = $this->json_rpc->call($this->getUri($path), 'call', $params, $this->session_id, $this->long_call);
         $this->long_call = false;
@@ -94,7 +97,12 @@ class OpenERP
         return $result;
     }
 
-    public function callWithoutCredential($path, $params = [])
+    /**
+     * @return mixed
+     *
+     * @throws JsonException
+     */
+    public function callWithoutCredential(string $path, array $params = [])
     {
         $result = $this->json_rpc->call($this->getUri($path), 'call', $params, null, $this->long_call);
         $this->long_call = false;
@@ -102,7 +110,12 @@ class OpenERP
         return $result;
     }
 
-    public function callBase($model, $method, array $args = [], $kwargs = null)
+    /**
+     * @return mixed
+     *
+     * @throws JsonException
+     */
+    public function callBase(string $model, string $method, array $args = [], ? array $kwargs = null)
     {
         if (null === $this->session_id) {
             if (false === $this->login()) {
@@ -115,30 +128,29 @@ class OpenERP
             'method' => $method,
             'args' => $args,
             'kwargs' => $kwargs ?: new \stdClass(),
-        ], null, $this->long_call);
+        ], $this->session_id, $this->long_call);
 
         $this->long_call = false;
 
         return $result;
     }
 
-    public function prepareLongCall()
+    public function prepareLongCall(): void
     {
         $this->long_call = true;
     }
 
-    public function isLogged()
+    public function isLogged(): bool
     {
         return null !== $this->session_id;
     }
 
     /**
-     * Set the URI of the OpenERP server
+     * Set the URI of the OpenERP server.
      *
-     * @param   string $base_uri The base URI of the OpenERP server
-     * @return  self
+     * @param string $base_uri The base URI of the OpenERP server
      */
-    public function setBaseUri($base_uri)
+    public function setBaseUri(string $base_uri): self
     {
         $this->base_uri = $base_uri;
 
@@ -146,20 +158,14 @@ class OpenERP
     }
 
     /**
-     * Set the port of the OpenERP server
+     * Set the port of the OpenERP server.
      *
-     * @param   int $port The port of the OpenERP server (require if it's not a standard port)
-     * @return  self
-     * @throws  \InvalidArgumentException   if the port is not a numeric
+     * @param int|null $port The port of the OpenERP server (require if it's not a standard port)
      */
-    public function setPort($port)
+    public function setPort(? int $port): self
     {
-        if (false === is_numeric($port) && null !== $port) {
-            throw new \InvalidArgumentException('port must be a numeric');
-        }
-
         if (null !== $port) {
-            $port = (int)$port;
+            $port = (int) $port;
         }
 
         $this->port = $port;
@@ -168,12 +174,11 @@ class OpenERP
     }
 
     /**
-     * Set the database name
+     * Set the database name.
      *
-     * @param   string $database The database name to use
-     * @return  self
+     * @param string $database The database name to use
      */
-    public function setDatabase($database)
+    public function setDatabase(string $database): self
     {
         $this->database = $database;
 
@@ -181,12 +186,11 @@ class OpenERP
     }
 
     /**
-     * Set the username to connect into the OpenERP server
+     * Set the username to connect into the OpenERP server.
      *
-     * @param   string $username the username to connect into the OpenERP server
-     * @return  self
+     * @param string $username the username to connect into the OpenERP server
      */
-    public function setUsername($username)
+    public function setUsername(string $username): self
     {
         $this->username = $username;
 
@@ -194,40 +198,43 @@ class OpenERP
     }
 
     /**
-     * Set the password to connect into the OpenERP server
+     * Set the password to connect into the OpenERP server.
      *
-     * @param   string $password the password to connect into the OpenERP server
-     * @return  self
+     * @param string $password the password to connect into the OpenERP server
      */
-    public function setPassword($password)
+    public function setPassword(string $password): self
     {
         $this->password = $password;
 
         return $this;
     }
 
-    public function reconnectOrLogin($session_id)
+    public function reconnectOrLogin(? string $session_id): bool
     {
         try {
+            if (null === $session_id) {
+                throw new SessionException();
+            }
+
             $datas = $this->storage->read($session_id);
-            if (null === $datas || false === is_array($datas)) {
+            if (null === $datas || false === \is_array($datas)) {
                 throw new SessionException();
             }
 
             $this->session_id = $datas['session_id'];
             $this->context = $datas['user_context'];
-            call_user_func_array([$this->json_rpc, 'setCookie'], $datas['cookie']);
+            \call_user_func_array([$this->json_rpc, 'setCookie'], $datas['cookie']);
 
             $response = $this->call('session/get_session_info');
 
-            if (false === is_array($response)) {
+            if (false === \is_array($response)) {
                 throw new JsonException('response must be an array');
             }
 
             $required_datas = ['username', 'user_context', 'uid', 'session_id', 'db', 'company_id'];
             foreach ($required_datas as $data) {
                 if (false === isset($response[$data])) {
-                    throw new JsonException(sprintf('%s is not in the response', $data));
+                    throw new JsonException(\sprintf('%s is not in the response', $data));
                 }
             }
 
@@ -246,11 +253,11 @@ class OpenERP
     }
 
     /**
-     * Login in the OpenERP server
+     * Login in the OpenERP server.
      *
-     * @return  bool    True if the login is OK, false else
+     * @return bool True if the login is OK, false else
      */
-    private function login()
+    private function login(): bool
     {
         try {
             $response = $this->callWithoutCredential('session/authenticate', [
@@ -260,7 +267,7 @@ class OpenERP
                 'password' => $this->password,
             ]);
 
-            if (false === is_array($response)) {
+            if (false === \is_array($response)) {
                 throw new JsonException('response must be an array');
             }
 
@@ -275,7 +282,7 @@ class OpenERP
             $cookie = $this->json_rpc->getCookie();
 
             $this->context = $response['user_context'];
-            $this->session_id = $cookie['value'];
+            $this->session_id = $cookie['value'] ?? null;
 
             $datas = [
                 'user_context' => $this->context,
@@ -292,13 +299,15 @@ class OpenERP
     }
 
     /**
-     * Build the complete URI
+     * Build the complete URI.
      *
-     * @param   string $path The path to call
-     * @return  string          The complete URI to call
-     * @throws  JsonException   If the base_uri is not define
+     * @param string $path The path to call
+     *
+     * @return string The complete URI to call
+     *
+     * @throws JsonException If the base_uri is not define
      */
-    private function getUri($path)
+    private function getUri(string $path): string
     {
         if (null === $this->base_uri) {
             throw new JsonException('base_uri must be define');
