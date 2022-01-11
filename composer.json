@@ -20,12 +20,12 @@
     },
 
     "require": {
-        "php": ">=7.3",
+        "php": "^7.3 || ~8.0.0 || ~8.1.0",
         "ext-json": "*",
-        "laminas/laminas-json": "~3.1",
-        "laminas/laminas-server": "~2.8",
-        "laminas/laminas-http": "~2.13",
-        "laminas/laminas-json-server": "^3.2"
+        "laminas/laminas-json": "^3.3",
+        "laminas/laminas-server": "^2.11",
+        "laminas/laminas-http": "^2.15",
+        "laminas/laminas-json-server": "^3.4"
     },
 
     "require-dev": {
