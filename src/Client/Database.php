@@ -24,6 +24,10 @@ class Database extends AClient implements ClientInterface
      */
     public function getList(): array
     {
+        if ($this->openerp_jsonrpc->isOdoo15OrMore()) {
+            return $this->openerp_jsonrpc->httpCallWithoutCredential(self::getPath('get_list'));
+        }
+
         return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('get_list'));
     }
 
@@ -61,6 +65,14 @@ class Database extends AClient implements ClientInterface
     public function duplicate(string $password, string $source_name, string $name): bool
     {
         $this->openerp_jsonrpc->prepareLongCall();
+
+        if ($this->openerp_jsonrpc->isOdoo15OrMore()) {
+            return $this->openerp_jsonrpc->httpCallWithoutCredential(self::getPath('duplicate'), [
+                'master_pwd' => $password,
+                'name' => $source_name,
+                'new_name' => $name,
+            ]);
+        }
 
         return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('duplicate'), [
             'fields' => [

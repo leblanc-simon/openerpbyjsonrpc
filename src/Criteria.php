@@ -33,10 +33,8 @@ class Criteria
 
     /**
      * List of criterion in the criteria.
-     *
-     * @var array
      */
-    private $criterions = [];
+    private array $criterions = [];
 
     /**
      * Get an instance of Criteria.

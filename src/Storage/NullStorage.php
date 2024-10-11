@@ -23,22 +23,16 @@ class NullStorage implements StorageInterface
 
     /**
      * Read a key in the storage.
-     *
-     * @return mixed
      */
-    public function read(string $key)
+    public function read(string $key): mixed
     {
         return null;
     }
 
     /**
      * Write data into storage.
-     *
-     * @param mixed $data
-     *
-     * @return $this
      */
-    public function write(string $key, $data): StorageInterface
+    public function write(string $key, mixed $data): StorageInterface
     {
         return $this;
     }

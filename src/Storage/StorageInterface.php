@@ -23,19 +23,13 @@ interface StorageInterface
 
     /**
      * Read a key in the storage.
-     *
-     * @return mixed
      */
-    public function read(string $key);
+    public function read(string $key): mixed;
 
     /**
      * Write data into storage.
      *
-     * @param mixed $data
-     *
-     * @return $this
-     *
      * @throws Exception\WriteException
      */
-    public function write(string $key, $data): self;
+    public function write(string $key, mixed $data): self;
 }

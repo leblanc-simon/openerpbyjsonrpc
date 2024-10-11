@@ -68,6 +68,11 @@ class OpenERP
     /**
      * @var bool
      */
+    private $is_odoo_15_or_more = null;
+
+    /**
+     * @var bool
+     */
     private $long_call = false;
 
     public function __construct(JsonRpcInterface $json_rpc, StorageInterface $storage)
@@ -105,6 +110,19 @@ class OpenERP
     public function callWithoutCredential(string $path, array $params = [])
     {
         $result = $this->json_rpc->call($this->getUri($path), 'call', $params, null, $this->long_call);
+        $this->long_call = false;
+
+        return $result;
+    }
+
+    /**
+     * @return mixed
+     *
+     * @throws JsonException
+     */
+    public function httpCallWithoutCredential(string $path, array $params = [])
+    {
+        $result = $this->json_rpc->callHttp($this->getUri($path), 'POST', $params, null, $this->long_call);
         $this->long_call = false;
 
         return $result;
@@ -252,6 +270,16 @@ class OpenERP
         return $this->login();
     }
 
+    public function isOdoo15OrMore(): bool
+    {
+        if (null === $this->is_odoo_15_or_more) {
+            $session_info = $this->callWithoutCredential('version');
+            var_dump($session_info);die;
+        }
+
+        return $this->is_odoo_15_or_more;
+    }
+
     /**
      * Login in the OpenERP server.
      *
@@ -273,6 +301,17 @@ class OpenERP
 
             if (false === isset($response['user_context'])) {
                 throw new JsonException('context is not in the response');
+            }
+
+            if (
+                true === isset($response['server_version']) &&
+                version_compare(
+                    preg_replace('#[^0-9\.]#', '', $response['server_version']),
+                    '15.0'
+                ) >= 0
+            ) {
+                $this->is_odoo_15_or_more = true;
+                $response['session_id'] = \password_hash(\json_encode($response['user_context'], JSON_THROW_ON_ERROR), \PASSWORD_DEFAULT);
             }
 
             if (false === isset($response['session_id'])) {

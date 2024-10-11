@@ -11,12 +11,12 @@ class DatabaseTest extends TestCase
     /**
      * @var array
      */
-    static private $config;
+    static private mixed $config;
 
     /**
      * @var Database
      */
-    private $database;
+    private Database $database;
 
     /**
      * This method is called before the first test of this test class is run.
@@ -80,7 +80,6 @@ class DatabaseTest extends TestCase
 
     /**
      * @large
-
      */
     public function testCreateDatabaseSuccess(): void
     {

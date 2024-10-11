@@ -17,15 +17,9 @@ use OpenErpByJsonRpc\Storage\Exception\WriteException;
 
 class FileStorage implements StorageInterface
 {
-    /**
-     * @var string
-     */
-    private $directory;
+    private string $directory;
 
-    /**
-     * @var string
-     */
-    private $prefix;
+    private string $prefix;
 
     /**
      * @throws OptionException
@@ -45,10 +39,8 @@ class FileStorage implements StorageInterface
 
     /**
      * Read a key in the storage.
-     *
-     * @return mixed
      */
-    public function read(string $key)
+    public function read(string $key): mixed
     {
         $filename = $this->directory.'/'.$this->prefix.$key;
         if (false === \is_file($filename) || false === \is_readable($filename)) {
@@ -60,19 +52,15 @@ class FileStorage implements StorageInterface
             return null;
         }
 
-        return \json_decode($content, true);
+        return \json_decode($content, true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
      * Write data into storage.
      *
-     * @param mixed $data
-     *
-     * @return $this
-     *
      * @throws WriteException
      */
-    public function write(string $key, $data): StorageInterface
+    public function write(string $key, mixed $data): StorageInterface
     {
         $content = \json_encode($data);
         if (false === @\file_put_contents($this->directory.'/'.$this->prefix.$key, $content)) {

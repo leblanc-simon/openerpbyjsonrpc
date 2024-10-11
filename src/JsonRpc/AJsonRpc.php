@@ -16,69 +16,26 @@ use Laminas\Json\Server\Client;
 
 abstract class AJsonRpc implements JsonRpcInterface
 {
-    /**
-     * @var string
-     */
-    protected $uri;
+    protected string $port;
 
-    /**
-     * @var string
-     */
-    protected $port;
-
-    /**
-     * @var string
-     */
-    protected $username;
-
-    /**
-     * @var string
-     */
-    protected $password;
-
-    /**
-     * @var string
-     */
-    protected $session_id;
+    protected string $session_id;
 
     /**
      * @var mixed|Client
      */
-    protected $client;
+    protected mixed $client;
 
-    /**
-     * @var mixed
-     */
-    protected $cookie;
+    protected mixed $cookie = null;
 
-    /**
-     * @var int
-     */
-    protected $timeout = 10;
+    protected int $timeout = 10;
 
-    /**
-     * @param string $uri
-     * @param string $username
-     * @param string $password
-     */
-    public function __construct(? string $uri = null, ? string $username = null, ? string $password = null)
-    {
-        if (null !== $uri) {
-            $this->setUri($uri);
-        }
-
-        if (null !== $username) {
-            $this->setUsername($username);
-        }
-
-        if (null !== $password) {
-            $this->setPassword($password);
-        }
+    public function __construct(
+        protected ?string $uri = null,
+        protected ?string $username = null,
+        protected ?string $password = null,
+    ) {
     }
 
-    /**
-     * @return $this
-     */
     public function setUri(string $uri): JsonRpcInterface
     {
         $this->uri = $uri;
@@ -86,9 +43,6 @@ abstract class AJsonRpc implements JsonRpcInterface
         return $this;
     }
 
-    /**
-     * @return $this
-     */
     public function setUsername(string $username): JsonRpcInterface
     {
         $this->username = $username;
@@ -96,9 +50,6 @@ abstract class AJsonRpc implements JsonRpcInterface
         return $this;
     }
 
-    /**
-     * @return $this
-     */
     public function setPassword(string $password): JsonRpcInterface
     {
         $this->password = $password;
@@ -106,15 +57,12 @@ abstract class AJsonRpc implements JsonRpcInterface
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getSessionId(): ? string
+    public function getSessionId(): ?string
     {
         return $this->session_id;
     }
 
-    public function getCookie(): ? array
+    public function getCookie(): ?array
     {
         return $this->cookie;
     }
@@ -129,8 +77,7 @@ abstract class AJsonRpc implements JsonRpcInterface
         return $this;
     }
 
-    /**
-     * @return mixed
-     */
-    abstract protected function getClient(string $url);
+    abstract protected function getJsonClient(string $url): mixed;
+
+    abstract protected function getHttpClient(string $url): mixed;
 }

@@ -14,7 +14,7 @@ namespace OpenErpByJsonRpc\JsonRpc;
 
 interface JsonRpcInterface
 {
-    public function __construct(? string $uri = null, ? string $username = null, ? string $password = null);
+    public function __construct(?string $uri = null, ?string $username = null, ?string $password = null);
 
     public function setUri(string $uri): self;
 
@@ -50,5 +50,16 @@ interface JsonRpcInterface
         array $params = [],
         ? string $session_id = null,
         bool $long_call = false
-    );
+    ): mixed;
+
+    /**
+     * @return mixed
+     */
+    public function callHttp(
+        string $url,
+        string $method,
+        array $params = [],
+        ? string $session_id = null,
+        bool $long_call = false
+    ): mixed;
 }

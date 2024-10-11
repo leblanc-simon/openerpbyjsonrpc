@@ -18,21 +18,18 @@ use Laminas\Json\Server\Client;
 
 class ZendJsonRpc extends AJsonRpc implements JsonRpcInterface
 {
-    /**
-     * @return mixed
-     */
     public function call(
         string $url,
         string $method,
         array $params = [],
         ? string $session_id = null,
         bool $long_call = false
-    ) {
+    ): mixed {
         if (true === $long_call) {
             $this->setTimeout(30 * 60 * 60); // 30 minutes
         }
 
-        $this->getClient($url);
+        $this->getJsonClient($url);
         $return_value = $this->client->call($method, $params);
 
         /* @var SetCookie[] cookie */
@@ -44,10 +41,33 @@ class ZendJsonRpc extends AJsonRpc implements JsonRpcInterface
         return $return_value;
     }
 
-    protected function getClient(string $url)
+    public function callHttp(
+        string $url,
+        string $method,
+        array $params = [],
+        ? string $session_id = null,
+        bool $long_call = false
+    ): mixed {
+        if (true === $long_call) {
+            $this->setTimeout(30 * 60 * 60); // 30 minutes
+        }
+
+        $client = $this->getHttpClient($url);
+        $return_value = $client->call($method, $params);
+
+        /* @var SetCookie[] cookie */
+        $this->cookie = $client->getHttpClient()->getResponse()->getCookie();
+
+        // Restore timeout
+        $this->setTimeout();
+
+        return $return_value;
+    }
+
+    protected function getJsonClient(string $url): mixed
     {
         $http_client = new HttpClient(null, ['timeout' => $this->timeout]);
-        $http_client->setHeaders(['User-Agent' => 'OpenErpByJsonRpc by ZendJsonRpc']);
+        $http_client->setHeaders(['User-Agent' => 'OpenErpByJsonRpc by LaminasHttpClient']);
 
         if (null !== $this->cookie) {
             $http_client->addCookie($this->cookie);
@@ -56,6 +76,18 @@ class ZendJsonRpc extends AJsonRpc implements JsonRpcInterface
         $this->client = new Client($url, $http_client);
 
         return $this->client;
+    }
+
+    protected function getHttpClient(string $url): mixed
+    {
+        $http_client = new HttpClient(null, ['timeout' => $this->timeout]);
+        $http_client->setHeaders(['User-Agent' => 'OpenErpByJsonRpc by LaminasHttpClient']);
+
+        if (null !== $this->cookie) {
+            $http_client->addCookie($this->cookie);
+        }
+
+        return $http_client;
     }
 
     /**
