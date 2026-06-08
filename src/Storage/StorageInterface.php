@@ -15,7 +15,7 @@ namespace OpenErpByJsonRpc\Storage;
 interface StorageInterface
 {
     /**
-     * @param array $options Option to initialize the storage
+     * @param array<string, mixed> $options Option to initialize the storage
      *
      * @throws Exception\OptionException
      */

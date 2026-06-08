@@ -15,7 +15,7 @@ namespace OpenErpByJsonRpc\Storage;
 class NullStorage implements StorageInterface
 {
     /**
-     * @phpstan-ignore-next-line
+     * @param array<string, mixed> $options
      */
     public function __construct(array $options = [])
     {

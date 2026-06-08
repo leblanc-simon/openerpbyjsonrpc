@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use OpenErpByJsonRpc\Client\Model;
 use OpenErpByJsonRpc\Criteria;
 use OpenErpByJsonRpc\Exception\ClientException;
@@ -7,19 +9,17 @@ use OpenErpByJsonRpc\Exception\NotSingleException;
 use OpenErpByJsonRpc\JsonRpc\OpenERP;
 use OpenErpByJsonRpc\JsonRpc\ZendJsonRpc;
 use OpenErpByJsonRpc\Storage\NullStorage;
+use PHPUnit\Framework\Attributes\Depends;
 use PHPUnit\Framework\TestCase;
 
 class ModelTest extends TestCase
 {
     /**
-     * @var array
+     * @var array<string, mixed>
      */
-    static private $config;
+    private static $config;
 
-    /**
-     * @var Model
-     */
-    private $model;
+    private Model $model;
 
     /**
      * This method is called before the first test of this test class is run.
@@ -31,7 +31,6 @@ class ModelTest extends TestCase
         $content = \file_get_contents(\dirname(__DIR__).'/config.test.json');
         if (false === $content) {
             self::fail('Impossible to read '.\dirname(__DIR__).'/config.test.json');
-            return;
         }
 
         self::$config = \json_decode($content, true);
@@ -43,8 +42,8 @@ class ModelTest extends TestCase
      */
     protected function setUp(): void
     {
-        $json_rpc = new ZendJsonRpc(self::$config['url']);
-        $openerp = new OpenERP($json_rpc, new NullStorage([]));
+        $jsonRpc = new ZendJsonRpc(self::$config['url']);
+        $openerp = new OpenERP($jsonRpc, new NullStorage([]));
         $openerp
             ->setBaseUri(self::$config['url'])
             ->setPort(self::$config['port'])
@@ -57,11 +56,12 @@ class ModelTest extends TestCase
 
     public function testReadOneRecord(): void
     {
-        /** @var array $result */
-        $result = $this->model->readOne('res.users', 1, ['id', 'login']);
-        self::assertIsArray($result);
+        // Since Odoo 12 the user id 1 is the internal "__system__" account; the
+        // administrator created with the database is the user id 2.
+        /** @var array<string, mixed> $result */
+        $result = $this->model->readOne('res.users', 2, ['id', 'login']);
         self::assertEquals(self::$config['username'], $result['login']);
-        self::assertEquals(1, $result['id']);
+        self::assertEquals(2, $result['id']);
     }
 
     public function testReadOneNonExistentRecord(): void
@@ -72,31 +72,30 @@ class ModelTest extends TestCase
 
     public function testReadOneMoreThanOneRecord(): void
     {
+        // res.country always contains several active records (res.lang only has
+        // fr_FR active on a fresh Odoo 18 database).
         $this->expectException(NotSingleException::class);
-        $this->model->readOne('res.lang', [1, 2], ['id', 'name']);
+        $this->model->readOne('res.country', [1, 2], ['id', 'name']);
     }
 
     public function testReadRecord(): void
     {
-        $result = $this->model->read('res.users', 1, ['id', 'login']);
-        self::assertIsArray($result);
+        $result = $this->model->read('res.users', 2, ['id', 'login']);
         self::assertEquals(self::$config['username'], $result[0]['login']);
-        self::assertEquals(1, $result[0]['id']);
+        self::assertEquals(2, $result[0]['id']);
     }
 
     public function testReadNonExistentRecord(): void
     {
         $result = $this->model->read('res.users', 0, ['id', 'login']);
-        self::assertIsArray($result);
         self::assertCount(0, $result);
     }
 
     public function testSearchWithArrayCriteria(): void
     {
         $result = $this->model->search('res.users', [['login', '=', self::$config['username']]], ['id', 'login']);
-        self::assertIsArray($result);
         self::assertCount(1, $result);
-        self::assertEquals([['id' => 1, 'login' => self::$config['username']]], $result);
+        self::assertEquals([['id' => 2, 'login' => self::$config['username']]], $result);
     }
 
     public function testSearchWithCriteria(): void
@@ -104,9 +103,8 @@ class ModelTest extends TestCase
         $criteria = new Criteria();
         $criteria->equal('login', self::$config['username']);
         $result = $this->model->search('res.users', $criteria, ['id', 'login']);
-        self::assertIsArray($result);
         self::assertCount(1, $result);
-        self::assertEquals([['id' => 1, 'login' => self::$config['username']]], $result);
+        self::assertEquals([['id' => 2, 'login' => self::$config['username']]], $result);
     }
 
     public function testSearchWithoutResult(): void
@@ -114,7 +112,6 @@ class ModelTest extends TestCase
         $criteria = new Criteria();
         $criteria->equal('login', self::$config['username'].'-----bad');
         $result = $this->model->search('res.users', $criteria, ['id', 'login']);
-        self::assertIsArray($result);
         self::assertCount(0, $result);
     }
 
@@ -135,26 +132,20 @@ class ModelTest extends TestCase
             'email' => 'test@unit-test.org',
         ]);
 
-        self::assertIsInt($result);
+        self::assertGreaterThan(0, $result);
 
         return $result;
     }
 
-    /**
-     * @depends testCreateRecord
-
-     */
+    #[Depends('testCreateRecord')]
     public function testReadCreatedRecord(int $id): void
     {
-        /** @var array $result */
+        /** @var array<string, mixed> $result */
         $result = $this->model->readOne('res.partner', $id, ['name']);
         self::assertEquals('Unit Tester', $result['name']);
     }
 
-    /**
-     * @depends testCreateRecord
-
-     */
+    #[Depends('testCreateRecord')]
     public function testWriteRecord(int $id): int
     {
         $result = $this->model->write('res.partner', $id, [
@@ -169,21 +160,15 @@ class ModelTest extends TestCase
         return $id;
     }
 
-    /**
-     * @depends testWriteRecord
-
-     */
+    #[Depends('testWriteRecord')]
     public function testReadWriteRecord(int $id): void
     {
+        /** @var array<string, mixed> $result */
         $result = $this->model->readOne('res.partner', $id, ['name']);
-        /** @var array $result */
         self::assertEquals('Unit Tester Update', $result['name']);
     }
 
-    /**
-     * @depends testWriteRecord
-
-     */
+    #[Depends('testWriteRecord')]
     public function testRemoveRecord(int $id): void
     {
         $result = $this->model->remove('res.partner', $id);

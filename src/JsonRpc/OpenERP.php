@@ -18,27 +18,15 @@ use OpenErpByJsonRpc\Storage\StorageInterface;
 
 class OpenERP
 {
-    const BASE_PATH = '/web/';
+    public const BASE_PATH = '/web/';
 
-    /**
-     * @var JsonRpcInterface
-     */
-    private $json_rpc;
+    private JsonRpcInterface $jsonRpc;
 
-    /**
-     * @var StorageInterface
-     */
-    private $storage;
+    private StorageInterface $storage;
 
-    /**
-     * @var string
-     */
-    private $base_uri;
+    private ?string $baseUri = null;
 
-    /**
-     * @var int|null
-     */
-    private $port;
+    private ?int $port = null;
 
     /**
      * @var string
@@ -50,127 +38,123 @@ class OpenERP
      */
     private $username;
 
-    /**
-     * @var string
-     */
-    private $password;
+    private ?string $password = null;
 
     /**
      * @var string|null
      */
-    private $session_id;
+    private $sessionId;
 
     /**
-     * @var array|null
+     * @var array<string, mixed>|null
      */
     private $context;
 
-    /**
-     * @var bool
-     */
-    private $is_odoo_15_or_more = null;
+    private ?bool $isOdoo15OrMore = null;
 
-    /**
-     * @var bool
-     */
-    private $long_call = false;
+    private bool $longCall = false;
 
-    public function __construct(JsonRpcInterface $json_rpc, StorageInterface $storage)
+    public function __construct(JsonRpcInterface $jsonRpc, StorageInterface $storage)
     {
-        $this->json_rpc = $json_rpc;
+        $this->jsonRpc = $jsonRpc;
         $this->storage = $storage;
     }
 
     /**
-     * @return mixed
+     * @param array<mixed> $params
      *
      * @throws JsonException
      */
-    public function call(string $path, array $params = [])
+    public function call(string $path, array $params = []): mixed
     {
-        if (null === $this->session_id) {
-            if (false === $this->login()) {
-                throw new JsonException('Impossible to login');
-            }
+        if (null === $this->sessionId && false === $this->login()) {
+            throw new JsonException('Impossible to login');
         }
 
         $params = \array_merge(['context' => $this->context], $params);
 
-        $result = $this->json_rpc->call($this->getUri($path), 'call', $params, $this->session_id, $this->long_call);
-        $this->long_call = false;
+        $result = $this->jsonRpc->call($this->getUri($path), 'call', $params, $this->sessionId, $this->longCall);
+        $this->longCall = false;
 
         return $result;
     }
 
     /**
-     * @return mixed
+     * @param array<mixed> $params
      *
      * @throws JsonException
      */
-    public function callWithoutCredential(string $path, array $params = [])
+    public function callWithoutCredential(string $path, array $params = []): mixed
     {
-        $result = $this->json_rpc->call($this->getUri($path), 'call', $params, null, $this->long_call);
-        $this->long_call = false;
+        $result = $this->jsonRpc->call($this->getUri($path), 'call', $params, null, $this->longCall);
+        $this->longCall = false;
 
         return $result;
     }
 
     /**
-     * @return mixed
+     * @param array<mixed> $params
      *
      * @throws JsonException
      */
-    public function httpCallWithoutCredential(string $path, array $params = [])
+    public function httpCallWithoutCredential(string $path, array $params = []): mixed
     {
-        $result = $this->json_rpc->callHttp($this->getUri($path), 'POST', $params, null, $this->long_call);
-        $this->long_call = false;
+        $result = $this->jsonRpc->callHttp($this->getUri($path), 'POST', $params, null, $this->longCall);
+        $this->longCall = false;
 
         return $result;
     }
 
     /**
-     * @return mixed
+     * @param array<mixed>              $args
+     * @param array<string, mixed>|null $kwargs
      *
      * @throws JsonException
      */
-    public function callBase(string $model, string $method, array $args = [], ? array $kwargs = null)
+    public function callBase(string $model, string $method, array $args = [], ?array $kwargs = null): mixed
     {
-        if (null === $this->session_id) {
-            if (false === $this->login()) {
-                throw new JsonException('Impossible to login');
-            }
+        if (null === $this->sessionId && false === $this->login()) {
+            throw new JsonException('Impossible to login');
         }
 
-        $result = $this->json_rpc->call($this->getUri('dataset/call_kw'), 'call', [
+        $result = $this->jsonRpc->call($this->getUri('dataset/call_kw'), 'call', [
             'model' => $model,
             'method' => $method,
             'args' => $args,
             'kwargs' => $kwargs ?: new \stdClass(),
-        ], $this->session_id, $this->long_call);
+        ], $this->sessionId, $this->longCall);
 
-        $this->long_call = false;
+        $this->longCall = false;
 
         return $result;
     }
 
     public function prepareLongCall(): void
     {
-        $this->long_call = true;
+        $this->longCall = true;
     }
 
     public function isLogged(): bool
     {
-        return null !== $this->session_id;
+        return null !== $this->sessionId;
+    }
+
+    /**
+     * Return the current session identifier (the OpenERP session cookie value).
+     */
+    public function getSessionId(): ?string
+    {
+        return $this->sessionId;
     }
 
     /**
      * Set the URI of the OpenERP server.
      *
-     * @param string $base_uri The base URI of the OpenERP server
+     * @param string $baseUri The base URI of the OpenERP server
      */
-    public function setBaseUri(string $base_uri): self
+    public function setBaseUri(string $baseUri): self
     {
-        $this->base_uri = $base_uri;
+        $this->baseUri = $baseUri;
 
         return $this;
     }
@@ -180,12 +164,8 @@ class OpenERP
      *
      * @param int|null $port The port of the OpenERP server (require if it's not a standard port)
      */
-    public function setPort(? int $port): self
+    public function setPort(?int $port): self
     {
-        if (null !== $port) {
-            $port = (int) $port;
-        }
-
         $this->port = $port;
 
         return $this;
@@ -227,21 +207,21 @@ class OpenERP
         return $this;
     }
 
-    public function reconnectOrLogin(? string $session_id): bool
+    public function reconnectOrLogin(?string $sessionId): bool
     {
         try {
-            if (null === $session_id) {
+            if (null === $sessionId) {
                 throw new SessionException();
             }
 
-            $datas = $this->storage->read($session_id);
+            $datas = $this->storage->read($sessionId);
             if (null === $datas || false === \is_array($datas)) {
                 throw new SessionException();
             }
 
-            $this->session_id = $datas['session_id'];
+            $this->sessionId = $datas['session_id'];
             $this->context = $datas['user_context'];
-            \call_user_func_array([$this->json_rpc, 'setCookie'], $datas['cookie']);
+            \call_user_func_array([$this->jsonRpc, 'setCookie'], $datas['cookie']);
 
             $response = $this->call('session/get_session_info');
 
@@ -249,21 +229,23 @@ class OpenERP
                 throw new JsonException('response must be an array');
             }
 
-            $required_datas = ['username', 'user_context', 'uid', 'session_id', 'db', 'company_id'];
-            foreach ($required_datas as $data) {
+            // Since Odoo 15 the session is tracked through the cookie: the
+            // response of get_session_info no longer carries "session_id" nor
+            // "company_id", so we keep the session_id restored from the storage.
+            $requiredDatas = ['username', 'user_context', 'uid', 'db'];
+            foreach ($requiredDatas as $data) {
                 if (false === isset($response[$data])) {
                     throw new JsonException(\sprintf('%s is not in the response', $data));
                 }
             }
 
-            $this->session_id = $response['session_id'];
             $this->context = $response['user_context'];
             $this->database = $response['db'];
             $this->username = $response['username'];
 
             return true;
         } catch (\Exception $e) {
-            $this->session_id = null;
+            $this->sessionId = null;
             $this->context = null;
         }
 
@@ -272,12 +254,20 @@ class OpenERP
 
     public function isOdoo15OrMore(): bool
     {
-        if (null === $this->is_odoo_15_or_more) {
-            $session_info = $this->callWithoutCredential('version');
-            var_dump($session_info);die;
+        if (null === $this->isOdoo15OrMore) {
+            $versionInfo = $this->callWithoutCredential('webclient/version_info');
+
+            $serverVersion = (\is_array($versionInfo) && isset($versionInfo['server_version']))
+                ? (string) $versionInfo['server_version']
+                : '0';
+
+            $this->isOdoo15OrMore = \version_compare(
+                (string) \preg_replace('#[^0-9\.]#', '', $serverVersion),
+                '15.0'
+            ) >= 0;
         }
 
-        return $this->is_odoo_15_or_more;
+        return $this->isOdoo15OrMore;
     }
 
     /**
@@ -289,7 +279,7 @@ class OpenERP
     {
         try {
             $response = $this->callWithoutCredential('session/authenticate', [
-                'base_location' => $this->base_uri,
+                'base_location' => $this->baseUri,
                 'db' => $this->database,
                 'login' => $this->username,
                 'password' => $this->password,
@@ -304,13 +294,13 @@ class OpenERP
             }
 
             if (
-                true === isset($response['server_version']) &&
-                version_compare(
+                isset($response['server_version'])
+                && version_compare(
                     preg_replace('#[^0-9\.]#', '', $response['server_version']),
                     '15.0'
                 ) >= 0
             ) {
-                $this->is_odoo_15_or_more = true;
+                $this->isOdoo15OrMore = true;
                 $response['session_id'] = \password_hash(\json_encode($response['user_context'], JSON_THROW_ON_ERROR), \PASSWORD_DEFAULT);
             }
 
@@ -318,18 +308,18 @@ class OpenERP
                 throw new JsonException('session_id is not in the response');
             }
 
-            $cookie = $this->json_rpc->getCookie();
+            $cookie = $this->jsonRpc->getCookie();
 
             $this->context = $response['user_context'];
-            $this->session_id = $cookie['value'] ?? null;
+            $this->sessionId = $cookie['value'] ?? null;
 
             $datas = [
                 'user_context' => $this->context,
-                'session_id' => $this->session_id,
+                'session_id' => $this->sessionId,
                 'cookie' => $cookie,
             ];
 
-            $this->storage->write($this->session_id, $datas);
+            $this->storage->write($this->sessionId, $datas);
 
             return true;
         } catch (\Exception $e) {
@@ -348,16 +338,16 @@ class OpenERP
      */
     private function getUri(string $path): string
     {
-        if (null === $this->base_uri) {
+        if (null === $this->baseUri) {
             throw new JsonException('base_uri must be define');
         }
 
-        $base_uri = $this->base_uri;
+        $baseUri = $this->baseUri;
 
         if (null !== $this->port) {
-            $base_uri .= ':'.$this->port;
+            $baseUri .= ':'.$this->port;
         }
 
-        return $base_uri.self::BASE_PATH.$path;
+        return $baseUri.self::BASE_PATH.$path;
     }
 }

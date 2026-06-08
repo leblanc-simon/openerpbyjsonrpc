@@ -24,42 +24,45 @@ interface JsonRpcInterface
 
     public function getSessionId(): ?string;
 
-    public function getCookie(): ? array;
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getCookie(): ?array;
 
     /**
      * @param int|string|\DateTime|null $expire
      */
     public function setCookie(
-        ? string $name,
-        ? string $value = null,
+        ?string $name,
+        ?string $value = null,
         $expire = null,
-        ? string $path = null,
-        ? string $domain = null,
+        ?string $path = null,
+        ?string $domain = null,
         bool $secure = false,
         bool $httponly = true,
-        ? int $max_age = null,
-        ? int $version = null
+        ?int $maxAge = null,
+        ?int $version = null,
     ): self;
 
     /**
-     * @return mixed
+     * @param array<mixed> $params
      */
     public function call(
         string $url,
         string $method,
         array $params = [],
-        ? string $session_id = null,
-        bool $long_call = false
+        ?string $sessionId = null,
+        bool $longCall = false,
     ): mixed;
 
     /**
-     * @return mixed
+     * @param array<mixed> $params
      */
     public function callHttp(
         string $url,
         string $method,
         array $params = [],
-        ? string $session_id = null,
-        bool $long_call = false
+        ?string $sessionId = null,
+        bool $longCall = false,
     ): mixed;
 }

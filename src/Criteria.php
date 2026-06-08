@@ -20,19 +20,21 @@ namespace OpenErpByJsonRpc;
  */
 class Criteria
 {
-    const EQUAL = '=';
-    const LESS_THAN = '<';
-    const LESS_EQUAL = '<=';
-    const GREATER_THAN = '>';
-    const GREATER_EQUAL = '>=';
-    const LIKE = 'like';
-    const ILIKE = 'ilike';
-    const NOT_EQUAL = '!=';
-    const IN = 'in';
-    const NOT_IN = 'not in';
+    public const EQUAL = '=';
+    public const LESS_THAN = '<';
+    public const LESS_EQUAL = '<=';
+    public const GREATER_THAN = '>';
+    public const GREATER_EQUAL = '>=';
+    public const LIKE = 'like';
+    public const ILIKE = 'ilike';
+    public const NOT_EQUAL = '!=';
+    public const IN = 'in';
+    public const NOT_IN = 'not in';
 
     /**
-     * List of criterion in the criteria.
+     * List of criterions in the criteria.
+     *
+     * @var array<int, array{string, string, mixed}>
      */
     private array $criterions = [];
 
@@ -50,8 +52,6 @@ class Criteria
      * @param string $field   The field name
      * @param mixed  $value   The value to search
      * @param string $compare The comparator
-     *
-     * @return $this
      */
     public function add(string $field, $value, string $compare = self::EQUAL): Criteria
     {
@@ -63,7 +63,7 @@ class Criteria
     /**
      * Get the criteria in the good format for OpenERP.
      *
-     * @return array The criteria of search
+     * @return array<int, array{string, string, mixed}> The criteria of search
      */
     public function get(): array
     {
@@ -75,8 +75,6 @@ class Criteria
      *
      * @param string $field The field name
      * @param mixed  $value The value to search
-     *
-     * @return $this
      */
     public function equal(string $field, $value): Criteria
     {
@@ -88,8 +86,6 @@ class Criteria
      *
      * @param string $field The field name
      * @param mixed  $value The value to search
-     *
-     * @return $this
      */
     public function lessThan(string $field, $value): Criteria
     {
@@ -101,8 +97,6 @@ class Criteria
      *
      * @param string $field The field name
      * @param mixed  $value The value to search
-     *
-     * @return $this
      */
     public function lessEqual(string $field, $value): Criteria
     {
@@ -114,8 +108,6 @@ class Criteria
      *
      * @param string $field The field name
      * @param mixed  $value The value to search
-     *
-     * @return $this
      */
     public function greaterThan(string $field, $value): Criteria
     {
@@ -127,8 +119,6 @@ class Criteria
      *
      * @param string $field The field name
      * @param mixed  $value The value to search
-     *
-     * @return $this
      */
     public function greaterEqual(string $field, $value): Criteria
     {
@@ -140,8 +130,6 @@ class Criteria
      *
      * @param string $field The field name
      * @param mixed  $value The value to search
-     *
-     * @return $this
      */
     public function like(string $field, $value): Criteria
     {
@@ -153,8 +141,6 @@ class Criteria
      *
      * @param string $field The field name
      * @param mixed  $value The value to search
-     *
-     * @return $this
      */
     public function ilike(string $field, $value): Criteria
     {
@@ -166,8 +152,6 @@ class Criteria
      *
      * @param string $field The field name
      * @param mixed  $value The value to search
-     *
-     * @return $this
      */
     public function notEqual(string $field, $value): Criteria
     {
@@ -179,8 +163,6 @@ class Criteria
      *
      * @param string $field The field name
      * @param mixed  $value The value to search
-     *
-     * @return $this
      */
     public function in(string $field, $value): Criteria
     {
@@ -192,8 +174,6 @@ class Criteria
      *
      * @param string $field The field name
      * @param mixed  $value The value to search
-     *
-     * @return $this
      */
     public function notIn(string $field, $value): Criteria
     {

@@ -12,6 +12,9 @@ declare(strict_types=1);
 
 namespace OpenErpByJsonRpc\Client;
 
+use Laminas\Http\Response;
+use OpenErpByJsonRpc\Exception\JsonException;
+
 class Database extends AClient implements ClientInterface
 {
     /**
@@ -21,36 +24,69 @@ class Database extends AClient implements ClientInterface
 
     /**
      * Return the available database name.
+     *
+     * @return string[]
      */
     public function getList(): array
     {
-        if ($this->openerp_jsonrpc->isOdoo15OrMore()) {
-            return $this->openerp_jsonrpc->httpCallWithoutCredential(self::getPath('get_list'));
+        if ($this->openerpJsonrpc->isOdoo15OrMore()) {
+            // Odoo 15+ exposes the list through the JSON controller /web/database/list.
+            return $this->openerpJsonrpc->callWithoutCredential('database/list');
         }
 
-        return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('get_list'));
+        return $this->openerpJsonrpc->callWithoutCredential($this->getPath('get_list'));
     }
 
     /**
      * Create a new database.
      *
-     * @param string $password       admin password (master password in the config file)
-     * @param string $name           the name of the new database
-     * @param bool   $demo           populate with demo data or not
-     * @param string $language       language to use
-     * @param string $admin_password admin password to initialize
+     * @param string $password      admin password (master password in the config file)
+     * @param string $name          the name of the new database
+     * @param bool   $demo          populate with demo data or not
+     * @param string $language      language to use
+     * @param string $adminPassword admin password to initialize
+     * @param string $login         login of the administrator account to create
      */
-    public function create(string $password, string $name, bool $demo, string $language, string $admin_password): bool
-    {
-        $this->openerp_jsonrpc->prepareLongCall();
+    public function create(
+        string $password,
+        string $name,
+        bool $demo,
+        string $language,
+        string $adminPassword,
+        string $login = 'admin',
+    ): bool {
+        $this->openerpJsonrpc->prepareLongCall();
 
-        return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('create'), [
+        if ($this->openerpJsonrpc->isOdoo15OrMore()) {
+            $params = [
+                'master_pwd' => $password,
+                'name' => $name,
+                'lang' => $language,
+                'password' => $adminPassword,
+                'login' => $login,
+                'phone' => '',
+                'country_code' => '',
+            ];
+
+            // The "demo" field is read as a checkbox: any non-empty value is
+            // truthy, so it must only be sent when demo data is requested.
+            if ($demo) {
+                $params['demo'] = 'on';
+            }
+
+            return $this->handleManagerResponse(
+                $this->openerpJsonrpc->httpCallWithoutCredential($this->getPath('create'), $params),
+                'creation'
+            );
+        }
+
+        return $this->openerpJsonrpc->callWithoutCredential($this->getPath('create'), [
             'fields' => [
                 ['name' => 'super_admin_pwd', 'value' => $password],
                 ['name' => 'db_name', 'value' => $name],
                 ['name' => 'demo_data', 'value' => $demo],
                 ['name' => 'db_lang', 'value' => $language],
-                ['name' => 'create_admin_pwd', 'value' => $admin_password],
+                ['name' => 'create_admin_pwd', 'value' => $adminPassword],
             ],
         ]);
     }
@@ -58,26 +94,29 @@ class Database extends AClient implements ClientInterface
     /**
      * Duplicate a database.
      *
-     * @param string $password    admin password (master password in the config file)
-     * @param string $source_name the source database
-     * @param string $name        the destination database
+     * @param string $password   admin password (master password in the config file)
+     * @param string $sourceName the source database
+     * @param string $name       the destination database
      */
-    public function duplicate(string $password, string $source_name, string $name): bool
+    public function duplicate(string $password, string $sourceName, string $name): bool
     {
-        $this->openerp_jsonrpc->prepareLongCall();
+        $this->openerpJsonrpc->prepareLongCall();
 
-        if ($this->openerp_jsonrpc->isOdoo15OrMore()) {
-            return $this->openerp_jsonrpc->httpCallWithoutCredential(self::getPath('duplicate'), [
-                'master_pwd' => $password,
-                'name' => $source_name,
-                'new_name' => $name,
-            ]);
+        if ($this->openerpJsonrpc->isOdoo15OrMore()) {
+            return $this->handleManagerResponse(
+                $this->openerpJsonrpc->httpCallWithoutCredential($this->getPath('duplicate'), [
+                    'master_pwd' => $password,
+                    'name' => $sourceName,
+                    'new_name' => $name,
+                ]),
+                'duplication'
+            );
         }
 
-        return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('duplicate'), [
+        return $this->openerpJsonrpc->callWithoutCredential($this->getPath('duplicate'), [
             'fields' => [
                 ['name' => 'super_admin_pwd', 'value' => $password],
-                ['name' => 'db_original_name', 'value' => $source_name],
+                ['name' => 'db_original_name', 'value' => $sourceName],
                 ['name' => 'db_name', 'value' => $name],
             ],
         ]);
@@ -91,9 +130,19 @@ class Database extends AClient implements ClientInterface
      */
     public function drop(string $password, string $name): bool
     {
-        $this->openerp_jsonrpc->prepareLongCall();
+        $this->openerpJsonrpc->prepareLongCall();
 
-        return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('drop'), [
+        if ($this->openerpJsonrpc->isOdoo15OrMore()) {
+            return $this->handleManagerResponse(
+                $this->openerpJsonrpc->httpCallWithoutCredential($this->getPath('drop'), [
+                    'master_pwd' => $password,
+                    'name' => $name,
+                ]),
+                'deletion'
+            );
+        }
+
+        return $this->openerpJsonrpc->callWithoutCredential($this->getPath('drop'), [
             'fields' => [
                 ['name' => 'drop_pwd', 'value' => $password],
                 ['name' => 'drop_db', 'value' => $name],
@@ -102,9 +151,34 @@ class Database extends AClient implements ClientInterface
     }
 
     /**
+     * Interpret the response of the Odoo 15+ HTTP database manager.
+     *
+     * On success the manager answers with a redirect; on failure it renders an
+     * HTML page (HTTP 200) containing the error message.
+     *
+     * @param Response $response
+     *
+     * @throws JsonException when the operation failed
+     */
+    private function handleManagerResponse(mixed $response, string $action): bool
+    {
+        if (true === $response->isRedirect()) {
+            return true;
+        }
+
+        $body = (string) $response->getBody();
+
+        if (1 === \preg_match('#Database\s+\w+\s+error:[^<\n]*#i', $body, $matches)) {
+            throw new JsonException(\trim($matches[0]));
+        }
+
+        throw new JsonException(\sprintf('Database %s failed', $action));
+    }
+
+    /**
      * Return the path for a method.
      */
-    private static function getPath(string $method): string
+    private function getPath(string $method): string
     {
         return \str_replace(':method', $method, self::PATH);
     }

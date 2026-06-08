@@ -14,25 +14,27 @@ namespace OpenErpByJsonRpc\Client;
 
 use OpenErpByJsonRpc\Criteria;
 use OpenErpByJsonRpc\Exception\ClientException;
+use OpenErpByJsonRpc\Exception\JsonException;
 use OpenErpByJsonRpc\Exception\NotSingleException;
 
 class Model extends AClient implements ClientInterface
 {
-    private const PATH = 'dataset/:method';
-
     /**
-     * @param array|Criteria $criteria
+     * @param array<mixed>|Criteria $criteria
+     * @param string[]              $fields
+     *
+     * @return array<int, array<string, mixed>>
      *
      * @throws ClientException
-     * @throws \OpenErpByJsonRpc\Exception\JsonException
+     * @throws JsonException
      */
     public function search(
         string $model,
         $criteria = [],
         array $fields = [],
         int $offset = 0,
-        ? int $limit = null,
-        string $sort = ''
+        ?int $limit = null,
+        string $sort = '',
     ): array {
         if ($criteria instanceof Criteria) {
             $criteria = $criteria->get();
@@ -43,31 +45,35 @@ class Model extends AClient implements ClientInterface
             throw new ClientException('criteria must be an array or Criteria instance');
         }
 
-        $result = $this->openerp_jsonrpc->call(self::getPath('search_read'), [
-            'model' => $model,
-            'fields' => $fields,
-            'domain' => $criteria,
-            'offset' => $offset,
-            'limit' => $limit,
-            'sort' => $sort,
-        ]);
+        // Odoo 15+ removed the legacy /web/dataset/search_read controller, so we
+        // go through /web/dataset/call_kw and invoke the model's search_read method.
+        $kwargs = ['offset' => $offset];
 
-        if (true === isset($result['records']) && true === \is_array($result['records'])) {
-            return $result['records'];
+        if (null !== $limit) {
+            $kwargs['limit'] = $limit;
         }
 
-        return [];
+        if ('' !== $sort) {
+            $kwargs['order'] = $sort;
+        }
+
+        $result = $this->openerpJsonrpc->callBase($model, 'search_read', [$criteria, $fields], $kwargs);
+
+        return \is_array($result) ? $result : [];
     }
 
     /**
      * @param int|int[] $ids
+     * @param string[]  $fields
+     *
+     * @return array<int, array<string, mixed>>
      *
      * @throws ClientException
-     * @throws \OpenErpByJsonRpc\Exception\JsonException
+     * @throws JsonException
      */
     public function read(string $model, $ids, array $fields = []): array
     {
-        if (true === \is_numeric($ids)) {
+        if (\is_numeric($ids)) {
             $ids = [$ids];
         }
 
@@ -79,12 +85,15 @@ class Model extends AClient implements ClientInterface
 
     /**
      * @param int|int[] $id
+     * @param string[]  $fields
+     *
+     * @return array<string, mixed>|null
      *
      * @throws ClientException
      * @throws NotSingleException
-     * @throws \OpenErpByJsonRpc\Exception\JsonException
+     * @throws JsonException
      */
-    public function readOne(string $model, $id, array $fields = []): ? array
+    public function readOne(string $model, $id, array $fields = []): ?array
     {
         $result = $this->read($model, $id, $fields);
 
@@ -99,23 +108,24 @@ class Model extends AClient implements ClientInterface
         throw new NotSingleException();
     }
 
+    /**
+     * @param array<string, mixed> $datas
+     */
     public function create(string $model, array $datas): int
     {
-        return $this->openerp_jsonrpc->callBase($model, 'create', [$datas]);
+        return $this->openerpJsonrpc->callBase($model, 'create', [$datas]);
     }
 
+    /**
+     * @param array<string, mixed> $datas
+     */
     public function write(string $model, int $id, array $datas): bool
     {
-        return $this->openerp_jsonrpc->callBase($model, 'write', [$id, $datas]);
+        return $this->openerpJsonrpc->callBase($model, 'write', [$id, $datas]);
     }
 
     public function remove(string $model, int $id): bool
     {
-        return $this->openerp_jsonrpc->callBase($model, 'unlink', [[$id]]);
-    }
-
-    private static function getPath(string $method): string
-    {
-        return \str_replace(':method', $method, self::PATH);
+        return $this->openerpJsonrpc->callBase($model, 'unlink', [[$id]]);
     }
 }

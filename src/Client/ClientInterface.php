@@ -16,5 +16,5 @@ use OpenErpByJsonRpc\JsonRpc\OpenERP;
 
 interface ClientInterface
 {
-    public function __construct(OpenERP $json_rpc);
+    public function __construct(OpenERP $jsonRpc);
 }

@@ -18,7 +18,7 @@ abstract class AJsonRpc implements JsonRpcInterface
 {
     protected string $port;
 
-    protected string $session_id;
+    protected string $sessionId;
 
     /**
      * @var mixed|Client
@@ -59,9 +59,12 @@ abstract class AJsonRpc implements JsonRpcInterface
 
     public function getSessionId(): ?string
     {
-        return $this->session_id;
+        return $this->sessionId;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getCookie(): ?array
     {
         return $this->cookie;

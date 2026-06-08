@@ -1,21 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 use OpenErpByJsonRpc\Client\Database;
+use OpenErpByJsonRpc\Exception\JsonException;
 use OpenErpByJsonRpc\JsonRpc\OpenERP;
 use OpenErpByJsonRpc\JsonRpc\ZendJsonRpc;
 use OpenErpByJsonRpc\Storage\NullStorage;
+use PHPUnit\Framework\Attributes\Depends;
 use PHPUnit\Framework\TestCase;
 
 class DatabaseTest extends TestCase
 {
     /**
-     * @var array
+     * @var array<string, mixed>
      */
-    static private mixed $config;
+    private static mixed $config;
 
-    /**
-     * @var Database
-     */
     private Database $database;
 
     /**
@@ -28,7 +29,6 @@ class DatabaseTest extends TestCase
         $content = \file_get_contents(\dirname(__DIR__).'/config.test.json');
         if (false === $content) {
             self::fail('Impossible to read '.\dirname(__DIR__).'/config.test.json');
-            return;
         }
 
         self::$config = \json_decode($content, true);
@@ -40,8 +40,8 @@ class DatabaseTest extends TestCase
      */
     protected function setUp(): void
     {
-        $json_rpc = new ZendJsonRpc(self::$config['url']);
-        $openerp = new OpenERP($json_rpc, new NullStorage([]));
+        $jsonRpc = new ZendJsonRpc(self::$config['url']);
+        $openerp = new OpenERP($jsonRpc, new NullStorage([]));
         $openerp
             ->setBaseUri(self::$config['url'])
             ->setPort(self::$config['port'])
@@ -57,8 +57,8 @@ class DatabaseTest extends TestCase
      */
     public static function tearDownAfterClass(): void
     {
-        $json_rpc = new ZendJsonRpc(self::$config['url']);
-        $openerp = new OpenERP($json_rpc, new NullStorage([]));
+        $jsonRpc = new ZendJsonRpc(self::$config['url']);
+        $openerp = new OpenERP($jsonRpc, new NullStorage([]));
         $openerp
             ->setBaseUri(self::$config['url'])
             ->setPort(self::$config['port'])
@@ -73,14 +73,11 @@ class DatabaseTest extends TestCase
     public function testListDatabase(): void
     {
         $list = $this->database->getList();
-        self::assertIsArray($list);
         self::assertCount(1, $list);
         self::assertEquals([self::$config['database']], $list);
     }
 
-    /**
-     * @large
-     */
+    #[Depends('testListDatabase')]
     public function testCreateDatabaseSuccess(): void
     {
         self::assertTrue($this->database->create(
@@ -102,8 +99,10 @@ class DatabaseTest extends TestCase
 
     public function testCreateDatabaseFailBecauseBadMasterPassword(): void
     {
-        $this->expectExceptionMessage("Odoo Server Error");
-        $this->expectException(\Laminas\Json\Server\Exception\ErrorException::class);
+        // Odoo 15+ handles database creation through an HTTP form: a wrong master
+        // password is reported as a rendered error page ("... error: Access Denied").
+        $this->expectException(JsonException::class);
+        $this->expectExceptionMessage('Access Denied');
 
         $this->database->create(
             self::$config['master_password'].'----bad',
@@ -114,10 +113,7 @@ class DatabaseTest extends TestCase
         );
     }
 
-    /**
-     * @large
-
-     */
+    #[Depends('testCreateDatabaseSuccess')]
     public function testDuplicateDatabaseSuccess(): void
     {
         self::assertTrue($this->database->duplicate(
@@ -136,10 +132,7 @@ class DatabaseTest extends TestCase
         );
     }
 
-    /**
-     * @large
-
-     */
+    #[Depends('testDuplicateDatabaseSuccess')]
     public function testDropDatabaseSuccess(): void
     {
         self::assertTrue($this->database->drop(
@@ -155,5 +148,4 @@ class DatabaseTest extends TestCase
             $this->database->getList()
         );
     }
-
 }

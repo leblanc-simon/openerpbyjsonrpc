@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use OpenErpByJsonRpc\Client\Session;
 use OpenErpByJsonRpc\JsonRpc\OpenERP;
 use OpenErpByJsonRpc\JsonRpc\ZendJsonRpc;
@@ -9,14 +11,11 @@ use PHPUnit\Framework\TestCase;
 class ReconnectTest extends TestCase
 {
     /**
-     * @var array
+     * @var array<string, mixed>
      */
-    static private $config;
+    private static $config;
 
-    /**
-     * @var string
-     */
-    static private $directory = __DIR__.'/../cache';
+    private static string $directory = __DIR__.'/../cache';
 
     /**
      * Sets up the fixture, for example, open a network connection.
@@ -46,18 +45,17 @@ class ReconnectTest extends TestCase
         $content = \file_get_contents(\dirname(__DIR__).'/config.test.json');
         if (false === $content) {
             self::fail('Impossible to read '.\dirname(__DIR__).'/config.test.json');
-            return;
         }
 
         self::$config = \json_decode($content, true);
     }
 
     /**
-     * Remove the cache directory
+     * Remove the cache directory.
      */
     protected function removeDirectory(): void
     {
-        if (is_dir(self::$directory) === false) {
+        if (false === is_dir(self::$directory)) {
             return;
         }
 
@@ -69,13 +67,10 @@ class ReconnectTest extends TestCase
         rmdir(self::$directory);
     }
 
-    /**
-     * @return FileStorage
-     */
     protected function getStorage(): FileStorage
     {
-        if (is_dir(self::$directory) === false) {
-            mkdir(static::$directory, 0755);
+        if (false === is_dir(self::$directory)) {
+            mkdir(self::$directory, 0755);
         }
 
         return new FileStorage([
@@ -86,8 +81,8 @@ class ReconnectTest extends TestCase
 
     public function testReconnectWithoutLogin(): void
     {
-        $json_rpc = new ZendJsonRpc(self::$config['url']);
-        $openerp = new OpenERP($json_rpc, $this->getStorage());
+        $jsonRpc = new ZendJsonRpc(self::$config['url']);
+        $openerp = new OpenERP($jsonRpc, $this->getStorage());
         $openerp
             ->setBaseUri(self::$config['url'])
             ->setPort(self::$config['port'])
@@ -99,13 +94,13 @@ class ReconnectTest extends TestCase
 
         $session = new Session($openerp);
         $infos = $session->getInfos();
-        $session_id = $infos['session_id'];
+        $sessionId = $infos['session_id'];
 
-        $openerp = new OpenERP($json_rpc, $this->getStorage());
+        $openerp = new OpenERP($jsonRpc, $this->getStorage());
         $openerp
             ->setBaseUri(self::$config['url'])
             ->setPort(self::$config['port'])
-            ->reconnectOrLogin($session_id)
+            ->reconnectOrLogin($sessionId)
         ;
 
         self::assertTrue($openerp->isLogged());

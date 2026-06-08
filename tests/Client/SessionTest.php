@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use OpenErpByJsonRpc\Client\Session;
 use OpenErpByJsonRpc\JsonRpc\OpenERP;
 use OpenErpByJsonRpc\JsonRpc\ZendJsonRpc;
@@ -9,9 +11,9 @@ use PHPUnit\Framework\TestCase;
 class SessionTest extends TestCase
 {
     /**
-     * @var array
+     * @var array<string, mixed>
      */
-    static private $config;
+    private static $config;
 
     /**
      * This method is called before the first test of this test class is run.
@@ -23,26 +25,21 @@ class SessionTest extends TestCase
         $content = \file_get_contents(\dirname(__DIR__).'/config.test.json');
         if (false === $content) {
             self::fail('Impossible to read '.\dirname(__DIR__).'/config.test.json');
-            return;
         }
 
         self::$config = \json_decode($content, true);
     }
 
-    /**
-     * @param bool|false $login
-     * @return Session
-     */
-    private function getSession($login = false): Session
+    private function getSession(bool $login = false): Session
     {
-        $json_rpc = new ZendJsonRpc(self::$config['url']);
-        $openerp = new OpenERP($json_rpc, new NullStorage([]));
+        $jsonRpc = new ZendJsonRpc(self::$config['url']);
+        $openerp = new OpenERP($jsonRpc, new NullStorage([]));
         $openerp
             ->setBaseUri(self::$config['url'])
             ->setPort(self::$config['port'])
         ;
 
-        if (true === $login) {
+        if ($login) {
             $openerp
                 ->setUsername(self::$config['username'])
                 ->setPassword(self::$config['password'])
@@ -58,7 +55,6 @@ class SessionTest extends TestCase
     {
         $session = $this->getSession();
         $informations = $session->getInfos();
-        self::assertIsArray($informations);
         self::assertEquals(null, $informations['uid']);
     }
 
@@ -66,15 +62,15 @@ class SessionTest extends TestCase
     {
         $session = $this->getSession(true);
         $informations = $session->getInfos();
-        self::assertIsArray($informations);
-        self::assertEquals(1, $informations['uid']);
+        // The administrator created with the database is the user id 2
+        // (id 1 being the internal "__system__" account since Odoo 12).
+        self::assertEquals(2, $informations['uid']);
     }
 
     public function testGetLanguages(): void
     {
         $session = $this->getSession();
         $languages = $session->getLangList();
-        self::assertIsArray($languages);
         self::assertContains(['fr_FR', 'French / Français'], $languages);
     }
 
@@ -82,7 +78,6 @@ class SessionTest extends TestCase
     {
         $session = $this->getSession(true);
         $modules = $session->getModules();
-        self::assertIsArray($modules);
         self::assertContains('web', $modules);
     }
 
