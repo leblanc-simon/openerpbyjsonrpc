@@ -17,17 +17,13 @@ use OpenErpByJsonRpc\Storage\Exception\WriteException;
 
 class FileStorage implements StorageInterface
 {
-    /**
-     * @var string
-     */
-    private $directory;
+    private string $directory;
+
+    private string $prefix;
 
     /**
-     * @var string
-     */
-    private $prefix;
-
-    /**
+     * @param array<string, mixed> $options
+     *
      * @throws OptionException
      */
     public function __construct(array $options = [])
@@ -45,10 +41,8 @@ class FileStorage implements StorageInterface
 
     /**
      * Read a key in the storage.
-     *
-     * @return mixed
      */
-    public function read(string $key)
+    public function read(string $key): mixed
     {
         $filename = $this->directory.'/'.$this->prefix.$key;
         if (false === \is_file($filename) || false === \is_readable($filename)) {
@@ -60,19 +54,15 @@ class FileStorage implements StorageInterface
             return null;
         }
 
-        return \json_decode($content, true);
+        return \json_decode($content, true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
      * Write data into storage.
      *
-     * @param mixed $data
-     *
-     * @return $this
-     *
      * @throws WriteException
      */
-    public function write(string $key, $data): StorageInterface
+    public function write(string $key, mixed $data): StorageInterface
     {
         $content = \json_encode($data);
         if (false === @\file_put_contents($this->directory.'/'.$this->prefix.$key, $content)) {
@@ -83,19 +73,19 @@ class FileStorage implements StorageInterface
     }
 
     /**
-     * @throws Exception\OptionException
+     * @throws OptionException
      */
     private function setDirectory(string $directory): void
     {
-        $real_directory = \realpath($directory);
-        if (false === $real_directory || false === \is_dir($real_directory)) {
+        $realDirectory = \realpath($directory);
+        if (false === $realDirectory || false === \is_dir($realDirectory)) {
             throw new OptionException(\sprintf('%s must exists', $directory));
         }
 
-        if (false === \is_readable($real_directory) || false === \is_writable($real_directory)) {
+        if (false === \is_readable($realDirectory) || false === \is_writable($realDirectory)) {
             throw new OptionException(\sprintf('%s must be readable and writable', $directory));
         }
 
-        $this->directory = $real_directory;
+        $this->directory = $realDirectory;
     }
 }

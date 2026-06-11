@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use OpenErpByJsonRpc\Storage\Exception\OptionException;
 use OpenErpByJsonRpc\Storage\Exception\WriteException;
 use OpenErpByJsonRpc\Storage\FileStorage;
@@ -7,10 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 class FileStorageTest extends TestCase
 {
-    /**
-     * @var string
-     */
-    static private $directory = __DIR__.'/../cache';
+    private static string $directory = __DIR__.'/../cache';
 
     /**
      * Sets up the fixture, for example, open a network connection.
@@ -31,11 +30,11 @@ class FileStorageTest extends TestCase
     }
 
     /**
-     * Remove the cache directory
+     * Remove the cache directory.
      */
     protected function removeDirectory(): void
     {
-        if (is_dir(self::$directory) === false) {
+        if (false === is_dir(self::$directory)) {
             return;
         }
 
@@ -47,12 +46,9 @@ class FileStorageTest extends TestCase
         rmdir(self::$directory);
     }
 
-    /**
-     * @return FileStorage
-     */
     protected function getStorage(): FileStorage
     {
-        mkdir(static::$directory, 0755);
+        mkdir(self::$directory, 0755);
 
         return new FileStorage([
             'directory' => self::$directory,
@@ -69,7 +65,7 @@ class FileStorageTest extends TestCase
 
     public function testWriteFailBecauseFileIsInReadonly(): void
     {
-        $this->expectExceptionMessage("Impossible to write test");
+        $this->expectExceptionMessage('Impossible to write test');
         $this->expectException(WriteException::class);
         $storage = $this->getStorage();
 
@@ -103,7 +99,7 @@ class FileStorageTest extends TestCase
 
     public function testFailIfDirectoryIsNotDefined(): void
     {
-        $this->expectExceptionMessage("directory must be defined");
+        $this->expectExceptionMessage('directory must be defined');
         $this->expectException(OptionException::class);
         new FileStorage([
             'prefix' => 'test_',
@@ -112,9 +108,9 @@ class FileStorageTest extends TestCase
 
     public function testFailIfPrefixIsNotDefined(): void
     {
-        $this->expectExceptionMessage("prefix must be defined");
+        $this->expectExceptionMessage('prefix must be defined');
         $this->expectException(OptionException::class);
-        mkdir(static::$directory, 0755);
+        mkdir(self::$directory, 0755);
 
         new FileStorage([
             'directory' => self::$directory,
@@ -124,7 +120,7 @@ class FileStorageTest extends TestCase
     public function testFailIfDirectoryDoesntExist(): void
     {
         $this->expectException(OptionException::class);
-        $this->expectExceptionMessageMatches("/.+ must exists/");
+        $this->expectExceptionMessageMatches('/.+ must exists/');
         new FileStorage([
             'directory' => self::$directory,
             'prefix' => 'test_',
@@ -133,9 +129,9 @@ class FileStorageTest extends TestCase
 
     public function testFailIfDirectoryIsNotWritable(): void
     {
-        $this->expectExceptionMessageMatches("/.+ must be readable and writable/");
+        $this->expectExceptionMessageMatches('/.+ must be readable and writable/');
         $this->expectException(OptionException::class);
-        mkdir(static::$directory, 0555);
+        mkdir(self::$directory, 0555);
 
         new FileStorage([
             'directory' => self::$directory,

@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 use OpenErpByJsonRpc\Criteria;
 use PHPUnit\Framework\TestCase;
 
 class CriteriaTest extends TestCase
 {
-
     public function testCriteriaEqual(): void
     {
         $criteria = Criteria::create();

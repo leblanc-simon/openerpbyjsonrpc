@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace OpenErpByJsonRpc\Client;
 
+use OpenErpByJsonRpc\Exception\JsonException;
+
 class Session extends AClient implements ClientInterface
 {
     /**
@@ -22,57 +24,74 @@ class Session extends AClient implements ClientInterface
     /**
      * Return the session information.
      *
-     * @throws \OpenErpByJsonRpc\Exception\JsonException
+     * @return array<string, mixed>
+     *
+     * @throws JsonException
      */
     public function getInfos(): array
     {
-        if (true === $this->openerp_jsonrpc->isLogged()) {
-            return $this->openerp_jsonrpc->call(self::getPath('get_session_info'));
+        if (false === $this->openerpJsonrpc->isLogged()) {
+            // Odoo 15+ raises a "Session Expired" error when get_session_info is
+            // called without an active session: there is no information to return.
+            return ['uid' => null];
         }
 
-        return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('get_session_info'));
+        $infos = $this->openerpJsonrpc->call($this->getPath('get_session_info'));
+
+        // Since Odoo 15 the session identifier is no longer part of the response
+        // (the session is tracked through the cookie). We expose it so callers
+        // can store it and reconnect later.
+        if (false === isset($infos['session_id'])) {
+            $infos['session_id'] = $this->openerpJsonrpc->getSessionId();
+        }
+
+        return $infos;
     }
 
     /**
      * Change current password.
      *
-     * @throws \OpenErpByJsonRpc\Exception\JsonException
+     * @return array<string, string>
+     *
+     * @throws JsonException
      */
-    public function changePassword(string $old_password, string $new_password): array
+    public function changePassword(string $oldPassword, string $newPassword): array
     {
-        return $this->openerp_jsonrpc->call(self::getPath('change_password'), [
-            'fields' => [
-                ['name' => 'old_pwd', 'value' => $old_password],
-                ['name' => 'new_password', 'value' => $new_password],
-                ['name' => 'confirm_pwd', 'value' => $new_password],
-            ],
-        ]);
+        // Odoo 15+ removed the /web/session/change_password controller; the
+        // password of the current user is now changed through res.users.
+        $this->openerpJsonrpc->callBase('res.users', 'change_password', [$oldPassword, $newPassword]);
+
+        return ['new_password' => $newPassword];
     }
 
     /**
      * Return the list of available language.
      *
-     * @throws \OpenErpByJsonRpc\Exception\JsonException
+     * @return array<mixed>
+     *
+     * @throws JsonException
      */
     public function getLangList(): array
     {
-        return $this->openerp_jsonrpc->callWithoutCredential(self::getPath('get_lang_list'));
+        return $this->openerpJsonrpc->callWithoutCredential($this->getPath('get_lang_list'));
     }
 
     /**
      * Return the list of available modules.
      *
-     * @throws \OpenErpByJsonRpc\Exception\JsonException
+     * @return array<mixed>
+     *
+     * @throws JsonException
      */
     public function getModules(): array
     {
-        return $this->openerp_jsonrpc->call(self::getPath('modules'));
+        return $this->openerpJsonrpc->call($this->getPath('modules'));
     }
 
     /**
      * Return the path for a method.
      */
-    private static function getPath(string $method): string
+    private function getPath(string $method): string
     {
         return \str_replace(':method', $method, self::PATH);
     }

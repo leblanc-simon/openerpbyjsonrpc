@@ -1,4 +1,7 @@
 /vendor
+/tools/php-cs-fixer/vendor
 /tests/config.test.json
 /tests/html-coverage
 .phpunit.cache
+.php-cs-fixer.cache
+/.php-cs-fixer.php

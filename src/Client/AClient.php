@@ -16,13 +16,7 @@ use OpenErpByJsonRpc\JsonRpc\OpenERP;
 
 abstract class AClient
 {
-    /**
-     * @var OpenERP
-     */
-    protected $openerp_jsonrpc;
-
-    public function __construct(OpenERP $openerp_jsonrpc)
+    public function __construct(protected OpenERP $openerpJsonrpc)
     {
-        $this->openerp_jsonrpc = $openerp_jsonrpc;
     }
 }

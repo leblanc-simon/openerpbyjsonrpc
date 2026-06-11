@@ -3,14 +3,28 @@ OpenErpByJsonRpc
 
 Communicate with Odoo via JSON-RPC
 
-[![SymfonyInsight](https://insight.symfony.com/projects/23e05d1d-f42c-440c-9e88-3176491a5c93/small.svg)](https://insight.symfony.com/projects/23e05d1d-f42c-440c-9e88-3176491a5c93)
-
 Installation
 ------------
 
 ```bash
 composer require leblanc-simon/openerpbyjsonrpc
 ```
+
+The library depends on a fork of `laminas/laminas-json-server`. Declare the
+matching VCS repository in your project's `composer.json` before installing:
+
+```json
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/leblanc-simon/laminas-json-server"
+        }
+    ]
+}
+```
+
+Requirements: PHP `>= 8.5` and the `ext-json` extension.
 
 Usage
 -----
@@ -40,8 +54,8 @@ $odoo
 ;
 
 // If you use FileStorage, you can reconnect without username and password
-// $session_id can be retrieve via Session::getInfos()
-$odoo->reconnectOrLogin($session_id);
+// $sessionId can be retrieve via Session::getInfos()
+$odoo->reconnectOrLogin($sessionId);
 
 
 ///////////////////////////////
@@ -72,12 +86,12 @@ $id = $model->create('res.partner', [
 ]);
 
 // Update record
-$model->create('res.partner', $id, [
+$model->write('res.partner', $id, [
     'name' => 'Jean Dupond',
 ]);
 
 // Delete record
-$model->create('res.partner', $id);
+$model->remove('res.partner', $id);
 
 
 ///////////////////////////////
@@ -129,6 +143,40 @@ $database->drop(
 );
 
 ```
+
+Documentation
+-------------
+
+Full documentation is available in the [`docs/`](docs/README.md) directory:
+
+- [Getting started](docs/getting-started.md)
+- [Connection & authentication](docs/connection-and-authentication.md)
+- [Working with records](docs/working-with-records.md)
+- [Building queries](docs/building-queries.md)
+- [Sessions](docs/sessions.md)
+- [Databases](docs/databases.md)
+- [Session storage](docs/session-storage.md)
+- [Error handling](docs/error-handling.md)
+- [API reference](docs/api-reference.md)
+- [Development](docs/development.md)
+
+A condensed reference for AI assistants is available in [`docs/llms.md`](docs/llms.md).
+
+Development
+-----------
+
+Quality tooling for contributors:
+
+- **Coding style** — [PHP CS Fixer](https://cs.symfony.com/) with the `@Symfony`
+  rule set: `composer cs-fix` (PHP CS Fixer is installed under
+  `tools/php-cs-fixer/`).
+- **Static analysis** — [PHPStan](https://phpstan.org/) at level 8:
+  `vendor/bin/phpstan analyse`.
+- **Automated refactoring** — [Rector](https://getrector.com/):
+  `vendor/bin/rector process`.
+- **Tests** — [PHPUnit](https://phpunit.de/): `vendor/bin/phpunit`.
+
+See [Development](docs/development.md) for the full guide.
 
 License
 -------

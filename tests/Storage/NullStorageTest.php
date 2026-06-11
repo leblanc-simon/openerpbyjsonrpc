@@ -1,14 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 use OpenErpByJsonRpc\Storage\NullStorage;
 use PHPUnit\Framework\TestCase;
 
 class NullStorageTest extends TestCase
 {
-    /**
-     * @var NullStorage
-     */
-    private $storage;
+    private NullStorage $storage;
 
     /**
      * Sets up the fixture, for example, open a network connection.
