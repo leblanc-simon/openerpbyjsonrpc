@@ -25,17 +25,10 @@
         }
     },
 
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/leblanc-simon/laminas-json-server"
-        }
-    ],
-
     "require": {
         "php": ">= 8.5",
         "ext-json": "*",
-        "laminas/laminas-json-server": "dev-features/php-8.5 as 3.9.99"
+        "laminas/laminas-json-server": ">= 3.10"
     },
 
     "require-dev": {
