@@ -11,8 +11,7 @@ working example.
 | Extensions  | `ext-json` |
 | Odoo / OpenERP | Any version reachable through the JSON-RPC web controllers. Both Odoo &lt; 15 and Odoo 15+ are supported. |
 
-The library depends on a fork of `laminas/laminas-json-server` (pinned to a
-PHP-8.5 compatible branch), which is the engine that performs the actual
+The library depends on `laminas/laminas-json-server, which is the engine that performs the actual
 JSON-RPC HTTP calls.
 
 ## Installation
@@ -21,21 +20,6 @@ Install with [Composer](https://getcomposer.org/):
 
 ```bash
 composer require leblanc-simon/openerpbyjsonrpc
-```
-
-Because the library relies on a fork of `laminas/laminas-json-server`, you must
-declare the corresponding VCS repository in your project's `composer.json`
-**before** running the command above:
-
-```json
-{
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/leblanc-simon/laminas-json-server"
-        }
-    ]
-}
 ```
 
 The package follows [PSR-4](https://www.php-fig.org/psr/psr-4/) autoloading under

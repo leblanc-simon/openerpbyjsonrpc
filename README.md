@@ -10,20 +10,6 @@ Installation
 composer require leblanc-simon/openerpbyjsonrpc
 ```
 
-The library depends on a fork of `laminas/laminas-json-server`. Declare the
-matching VCS repository in your project's `composer.json` before installing:
-
-```json
-{
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/leblanc-simon/laminas-json-server"
-        }
-    ]
-}
-```
-
 Requirements: PHP `>= 8.5` and the `ext-json` extension.
 
 Usage
